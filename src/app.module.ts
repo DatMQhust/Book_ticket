@@ -6,6 +6,10 @@ import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
 import configs from './config/index';
 import { TestModule } from '../test/testConfig/test.module';
+import { EventsModule } from './events/events.module';
+import { OrganizersModule } from './organizers/organizers.module';
+import { TicketModule } from './ticket/ticket.module';
+import { OrderModule } from './order/order.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -16,6 +20,10 @@ import { TestModule } from '../test/testConfig/test.module';
     UsersModule,
     DatabaseModule,
     TestModule,
+    EventsModule,
+    OrganizersModule,
+    TicketModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],

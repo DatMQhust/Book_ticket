@@ -1,3 +1,5 @@
+import { OrderEntity } from '../../order/entities/order.entity';
+import { OrganizerEntity } from '../../organizers/entities/organizer.entity';
 import {
   Entity,
   Column,
@@ -5,6 +7,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  OneToOne,
+  OneToMany,
 } from 'typeorm';
 
 export enum UserRole {
@@ -15,7 +19,7 @@ export enum UserRole {
 @Entity('users')
 export class UserEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: number;
+  id: string;
 
   @Column({ type: 'varchar', length: 200 })
   name: string;
@@ -33,6 +37,12 @@ export class UserEntity {
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;
+
+  @OneToOne(() => OrganizerEntity, (organizer) => organizer.user)
+  organizer: OrganizerEntity;
+
+  @OneToMany(() => OrderEntity, (order) => order.user)
+  ticketOrders: OrderEntity[];
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
