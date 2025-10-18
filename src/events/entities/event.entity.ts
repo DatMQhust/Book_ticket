@@ -34,6 +34,12 @@ export class EventEntity {
   @Column({ type: 'varchar', length: 255 })
   location: string;
 
+  @Column({ type: 'varchar', length: 255 })
+  province: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  ward: string;
+
   @OneToMany(() => TicketEntity, (ticket) => ticket.event)
   tickets: TicketEntity[];
   @ManyToOne(() => OrganizerEntity, (organizer) => organizer.events)
