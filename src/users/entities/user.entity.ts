@@ -38,6 +38,9 @@ export class UserEntity {
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;
 
+  @Column({ type: 'varchar', length: 500, nullable: true, select: false })
+  refreshToken?: string;
+
   @OneToOne(() => OrganizerEntity, (organizer) => organizer.user)
   organizer: OrganizerEntity;
 

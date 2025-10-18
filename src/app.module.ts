@@ -10,6 +10,7 @@ import { EventsModule } from './events/events.module';
 import { OrganizersModule } from './organizers/organizers.module';
 import { TicketModule } from './ticket/ticket.module';
 import { OrderModule } from './order/order.module';
+import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -24,6 +25,7 @@ import { OrderModule } from './order/order.module';
     OrganizersModule,
     TicketModule,
     OrderModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
