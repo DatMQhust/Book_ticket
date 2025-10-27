@@ -58,4 +58,12 @@ export class UsersService {
     }
     await this.userRepository.update(id, { refreshToken });
   }
+
+  async validateGoogleUser(googleUser: CreateUserDto) {
+    let user = await this.findUserByEmail(googleUser.email);
+    if (!user) {
+      user = await this.create(googleUser);
+    }
+    return user;
+  }
 }
