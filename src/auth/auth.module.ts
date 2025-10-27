@@ -6,7 +6,6 @@ import { AuthController } from './auth.controller';
 import { LocalStrategy } from './passport/local-strategy';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import * as ms from 'ms';
 @Module({
   imports: [
     UsersModule,
@@ -16,7 +15,7 @@ import * as ms from 'ms';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: ms(configService.get('JWT_EXPIRATION_TIME')),
+          expiresIn: configService.get('JWT_EXPIRATION_TIME'),
         },
       }),
     }),
