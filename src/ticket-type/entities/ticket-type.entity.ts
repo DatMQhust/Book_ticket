@@ -9,14 +9,21 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  Check,
 } from 'typeorm';
 import { TicketEntity } from '../../ticket/entities/ticket.entity';
+import { EventSessionEntity } from '../../event-session/entities/event-session.entity';
 
 export enum TicketStatus {
   AVAILABLE = 'available',
   SOLD_OUT = 'sold_out',
 }
 @Entity('ticket-types')
+@Check(`
+  ( ("eventId" IS NOT NULL) AND ("eventSessionId" IS NULL) )
+  OR
+  ( ("eventId" IS NULL) AND ("eventSessionId" IS NOT NULL) )
+`)
 export class TicketTypeEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -42,9 +49,15 @@ export class TicketTypeEntity {
   @Column({ type: 'enum', enum: TicketStatus, default: TicketStatus.AVAILABLE })
   status: TicketStatus;
 
-  @ManyToOne(() => EventEntity, (event) => event.tickets)
+  // Một loại vé CÓ THỂ liên kết với Event (cho vé "Toàn sự kiện")
+  @ManyToOne(() => EventEntity, (event) => event.tickets, { nullable: true })
   @JoinColumn({ name: 'eventId' })
   event: EventEntity;
+
+  // Hoặc, một loại vé CÓ THỂ liên kết với Session (cho vé "Theo phiên")
+  @ManyToOne(() => EventSessionEntity, { nullable: true })
+  @JoinColumn({ name: 'eventSessionId' })
+  session: EventSessionEntity;
 
   @OneToMany(() => TicketEntity, (ticket) => ticket.ticketType)
   tickets: TicketEntity[];

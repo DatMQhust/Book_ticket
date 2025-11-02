@@ -14,6 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { TicketTypeModule } from './ticket-type/ticket-type.module';
+import { EventSessionModule } from './event-session/event-session.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -30,6 +31,7 @@ import { TicketTypeModule } from './ticket-type/ticket-type.module';
     OrderModule,
     AuthModule,
     TicketTypeModule,
+    EventSessionModule,
   ],
   controllers: [AppController],
   providers: [

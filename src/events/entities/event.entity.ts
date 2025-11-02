@@ -10,6 +10,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { TicketTypeEntity } from '../../ticket-type/entities/ticket-type.entity';
+import { EventSessionEntity } from '../../event-session/entities/event-session.entity';
 export enum EventStatus {
   UPCOMING = 'upcoming',
   ONGOING = 'ongoing',
@@ -26,9 +27,6 @@ export class EventEntity {
 
   @Column({ type: 'text' })
   description: string;
-
-  @Column({ type: 'timestamptz' })
-  eventDate: Date;
 
   @Column({ type: 'timestamptz' })
   startSellDate: Date;
@@ -51,6 +49,15 @@ export class EventEntity {
     default: EventStatus.UPCOMING,
   })
   status: EventStatus;
+
+  @OneToMany(() => EventSessionEntity, (session) => session.event)
+  sessions: EventSessionEntity[];
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  bannerUrl: string;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  imageUrl: string;
 
   @OneToMany(() => TicketTypeEntity, (ticket) => ticket.event)
   tickets: TicketTypeEntity[];

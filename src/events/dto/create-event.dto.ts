@@ -21,9 +21,6 @@ export class CreateEventDto {
   @IsNotEmpty()
   organizerId: string;
 
-  @IsNotEmpty()
-  eventDate: Date;
-
   @IsDateString()
   @IsNotEmpty()
   startSellDate: Date;
