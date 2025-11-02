@@ -1,4 +1,3 @@
-import { TicketEntity } from '../../ticket/entities/ticket.entity';
 import { OrganizerEntity } from '../../organizers/entities/organizer.entity';
 import {
   Entity,
@@ -10,7 +9,13 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
-
+import { TicketTypeEntity } from '../../ticket-type/entities/ticket-type.entity';
+export enum EventStatus {
+  UPCOMING = 'upcoming',
+  ONGOING = 'ongoing',
+  ENDED = 'ended',
+  CANCELLED = 'cancelled',
+}
 @Entity('events')
 export class EventEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -40,8 +45,16 @@ export class EventEntity {
   @Column({ type: 'varchar', length: 255 })
   ward: string;
 
-  @OneToMany(() => TicketEntity, (ticket) => ticket.event)
-  tickets: TicketEntity[];
+  @Column({
+    type: 'enum',
+    enum: EventStatus,
+    default: EventStatus.UPCOMING,
+  })
+  status: EventStatus;
+
+  @OneToMany(() => TicketTypeEntity, (ticket) => ticket.event)
+  tickets: TicketTypeEntity[];
+
   @ManyToOne(() => OrganizerEntity, (organizer) => organizer.events)
   @JoinColumn({ name: 'organizerId' })
   organizer: OrganizerEntity;

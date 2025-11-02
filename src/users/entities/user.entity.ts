@@ -1,3 +1,4 @@
+import { TicketEntity } from '../../ticket/entities/ticket.entity';
 import { OrderEntity } from '../../order/entities/order.entity';
 import { OrganizerEntity } from '../../organizers/entities/organizer.entity';
 import {
@@ -46,6 +47,9 @@ export class UserEntity {
 
   @OneToMany(() => OrderEntity, (order) => order.user)
   ticketOrders: OrderEntity[];
+
+  @OneToMany(() => TicketEntity, (ticket) => ticket.user)
+  tickets: TicketEntity[];
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;

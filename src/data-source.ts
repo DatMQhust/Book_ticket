@@ -15,6 +15,7 @@ import { OrganizerEntity } from './organizers/entities/organizer.entity';
 import { EventEntity } from './events/entities/event.entity';
 import { TicketEntity } from './ticket/entities/ticket.entity';
 import { OrderEntity } from './order/entities/order.entity';
+import { TicketTypeEntity } from './ticket-type/entities/ticket-type.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -30,6 +31,7 @@ export const AppDataSource = new DataSource({
     EventEntity,
     TicketEntity,
     OrderEntity,
+    TicketTypeEntity,
     // Add more entities here as needed
   ],
   migrations: ['src/migrations/**/*.ts'],

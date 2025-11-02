@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { TicketEntity } from '../../ticket/entities/ticket.entity';
 export enum OrderStatus {
@@ -23,15 +24,15 @@ export class OrderEntity {
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;
 
-  @ManyToOne(() => TicketEntity, (ticket) => ticket.ticketOrders)
-  @JoinColumn({ name: 'ticket_id' })
-  ticket: TicketEntity;
+  @Column({ type: 'int' })
+  totalPrice: number;
+
+  // Một đơn hàng sẽ có nhiều vé (ví dụ: 5 vé VIP)
+  @OneToMany(() => TicketEntity, (ticket) => ticket.order)
+  tickets: TicketEntity[];
 
   @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.PENDING })
   status: OrderStatus;
-
-  @Column({ type: 'int' })
-  quantity: number;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;

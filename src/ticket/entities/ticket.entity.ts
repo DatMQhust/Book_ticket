@@ -1,52 +1,40 @@
-import { OrderEntity } from '../../order/entities/order.entity';
-import { EventEntity } from '../../events/entities/event.entity';
+import { UserEntity } from '../../users/entities/user.entity';
 import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
   CreateDateColumn,
-  UpdateDateColumn,
   ManyToOne,
   JoinColumn,
-  OneToMany,
+  UpdateDateColumn,
 } from 'typeorm';
+import { OrderEntity } from '../../order/entities/order.entity';
+import { TicketTypeEntity } from '../../ticket-type/entities/ticket-type.entity';
 
 export enum TicketStatus {
-  AVAILABLE = 'available',
-  SOLD_OUT = 'sold_out',
+  UNCHECKED = 'unchecked', // Vé chưa check-in
+  CHECKED_IN = 'checked_in', // Vé đã check-in
 }
+
 @Entity('tickets')
 export class TicketEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id: string; // ID này sẽ dùng để sinh QR code
 
-  @Column({ type: 'varchar', length: 200 })
-  name: string;
+  @ManyToOne(() => UserEntity, (user) => user.tickets) // Liên kết với User
+  @JoinColumn({ name: 'user_id' })
+  user: UserEntity;
 
-  @Column({ type: 'int' })
-  price: number;
+  @ManyToOne(() => OrderEntity, (order) => order.tickets) // Liên kết với Order
+  @JoinColumn({ name: 'order_id' })
+  order: OrderEntity;
 
-  @Column({ type: 'int' })
-  quantity: number;
+  @ManyToOne(() => TicketTypeEntity, (type) => type.tickets) // Liên kết với Loại vé
+  @JoinColumn({ name: 'ticket_type_id' })
+  ticketType: TicketTypeEntity;
 
-  @Column({ type: 'int' })
-  rank: number;
-
-  @Column({ type: 'text' })
-  description: string;
-
-  @Column({ type: 'int' })
-  sold: number;
-
-  @Column({ type: 'enum', enum: TicketStatus, default: TicketStatus.AVAILABLE })
+  @Column({ type: 'enum', enum: TicketStatus, default: TicketStatus.UNCHECKED })
   status: TicketStatus;
-
-  @ManyToOne(() => EventEntity, (event) => event.tickets)
-  @JoinColumn({ name: 'eventId' })
-  event: EventEntity;
-
-  @OneToMany(() => OrderEntity, (order) => order.ticket)
-  ticketOrders: OrderEntity[];
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
