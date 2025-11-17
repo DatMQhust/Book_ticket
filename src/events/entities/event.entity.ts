@@ -59,8 +59,8 @@ export class EventEntity {
   @Column({ type: 'varchar', length: 500, nullable: true })
   imageUrl: string;
 
-  @OneToMany(() => TicketTypeEntity, (ticket) => ticket.event)
-  tickets: TicketTypeEntity[];
+  @OneToMany(() => TicketTypeEntity, (ticketType) => ticketType.event)
+  ticketTypes: TicketTypeEntity[];
 
   @ManyToOne(() => OrganizerEntity, (organizer) => organizer.events)
   @JoinColumn({ name: 'organizerId' })

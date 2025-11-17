@@ -15,6 +15,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { TicketTypeModule } from './ticket-type/ticket-type.module';
 import { EventSessionModule } from './event-session/event-session.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -32,6 +33,7 @@ import { EventSessionModule } from './event-session/event-session.module';
     AuthModule,
     TicketTypeModule,
     EventSessionModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [

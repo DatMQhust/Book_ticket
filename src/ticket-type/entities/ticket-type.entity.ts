@@ -50,7 +50,9 @@ export class TicketTypeEntity {
   status: TicketStatus;
 
   // Một loại vé CÓ THỂ liên kết với Event (cho vé "Toàn sự kiện")
-  @ManyToOne(() => EventEntity, (event) => event.tickets, { nullable: true })
+  @ManyToOne(() => EventEntity, (event) => event.ticketTypes, {
+    nullable: true,
+  })
   @JoinColumn({ name: 'eventId' })
   event: EventEntity;
 
