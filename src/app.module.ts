@@ -16,8 +16,15 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { TicketTypeModule } from './ticket-type/ticket-type.module';
 import { EventSessionModule } from './event-session/event-session.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10,
+      },
+    ]),
     ConfigModule.forRoot({
       isGlobal: true,
       load: configs,

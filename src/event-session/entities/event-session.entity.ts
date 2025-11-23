@@ -1,3 +1,4 @@
+import { TicketTypeEntity } from '../../ticket-type/entities/ticket-type.entity';
 import { EventEntity } from '../../events/entities/event.entity';
 import {
   Entity,
@@ -7,6 +8,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 export enum EventStatus {
   UPCOMING = 'upcoming',
@@ -40,6 +42,11 @@ export class EventSessionEntity {
     default: EventStatus.UPCOMING,
   })
   status: EventStatus;
+
+  @OneToMany(() => TicketTypeEntity, (ticketType) => ticketType.session, {
+    cascade: true,
+  })
+  ticketTypes: TicketTypeEntity[];
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;

@@ -1,5 +1,9 @@
 // src/event/event.service.ts
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EventEntity } from './entities/event.entity';
 import { Repository, DataSource } from 'typeorm';
@@ -91,5 +95,25 @@ export class EventsService {
         createdAt: 'DESC',
       },
     });
+  }
+  async getEventDetail(id: string): Promise<EventEntity> {
+    const event = await this.eventRepository.findOne({
+      where: { id },
+      relations: ['sessions', 'organizer', 'sessions.ticketTypes'],
+      order: {
+        sessions: {
+          startTime: 'ASC',
+          ticketTypes: {
+            price: 'ASC',
+          },
+        },
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException(`Event with ID ${id} not found`);
+    }
+
+    return event;
   }
 }

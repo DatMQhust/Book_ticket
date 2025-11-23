@@ -8,6 +8,7 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  Unique,
 } from 'typeorm';
 import { TicketTypeEntity } from '../../ticket-type/entities/ticket-type.entity';
 import { EventSessionEntity } from '../../event-session/entities/event-session.entity';
@@ -25,6 +26,7 @@ export enum EventType {
   OTHER = 'other',
 }
 @Entity('events')
+@Unique(['name', 'organizer'])
 export class EventEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;

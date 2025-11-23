@@ -1,6 +1,13 @@
 // src/event-session/dto/create-event-session.dto.ts
-import { IsString, IsNotEmpty, IsDate } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsDate,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
+import { CreateTicketTypeDto } from 'src/ticket-type/dto/create-ticket-type.dto';
 
 export class CreateEventSessionDto {
   @IsString()
@@ -18,4 +25,9 @@ export class CreateEventSessionDto {
   @Type(() => Date)
   @IsNotEmpty()
   endTime: Date;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateTicketTypeDto)
+  ticketTypes: CreateTicketTypeDto[];
 }

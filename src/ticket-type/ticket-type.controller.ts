@@ -1,34 +1,43 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { TicketTypeService } from './ticket-type.service';
-import { CreateTicketTypeDto } from './dto/create-ticket-type.dto';
-import { UpdateTicketTypeDto } from './dto/update-ticket-type.dto';
+import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TicketTypeEntity } from './entities/ticket-type.entity';
+import { EventSessionEntity } from '../event-session/entities/event-session.entity';
+import { CreateTicketTypeDto } from './dto/create-ticket-type.dto'; // Tận dụng DTO cũ
+import { Roles } from 'src/auth/decorators/auth.decorator';
+import { UserRole } from 'src/users/entities/user.entity';
+// Import Auth Guard, User decorator...
 
-@Controller('ticket-type')
+@Controller('ticket-types')
 export class TicketTypeController {
-  constructor(private readonly ticketTypeService: TicketTypeService) {}
+  constructor(
+    @InjectRepository(TicketTypeEntity)
+    private ticketTypeRepo: Repository<TicketTypeEntity>,
+    @InjectRepository(EventSessionEntity)
+    private sessionRepo: Repository<EventSessionEntity>,
+  ) {}
 
-  @Post()
-  create(@Body() createTicketTypeDto: CreateTicketTypeDto) {
-    return this.ticketTypeService.create(createTicketTypeDto);
-  }
+  @Post('add-to-session')
+  @Roles(UserRole.ORGANIZER)
+  async addTicketToSession(
+    @Body() body: { sessionId: string; ticketData: CreateTicketTypeDto },
+  ) {
+    const { sessionId, ticketData } = body;
 
-  @Get()
-  findAll() {
-    return this.ticketTypeService.findAll();
-  }
+    // 1. Kiểm tra session có tồn tại không
+    const session = await this.sessionRepo.findOne({
+      where: { id: sessionId },
+      relations: ['event', 'event.organizer'],
+    });
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.ticketTypeService.findOne(+id);
-  }
+    if (!session) {
+      throw new BadRequestException('Phiên diễn không tồn tại');
+    }
+    const newTicket = this.ticketTypeRepo.create({
+      ...ticketData,
+      session: session,
+    });
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTicketTypeDto: UpdateTicketTypeDto) {
-    return this.ticketTypeService.update(+id, updateTicketTypeDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.ticketTypeService.remove(+id);
+    return this.ticketTypeRepo.save(newTicket);
   }
 }

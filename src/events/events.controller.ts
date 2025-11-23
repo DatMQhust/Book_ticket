@@ -8,6 +8,7 @@ import {
   Request,
   BadRequestException,
   Get,
+  Param,
 } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { Public, Roles } from 'src/auth/decorators/auth.decorator';
@@ -15,6 +16,7 @@ import { UserRole } from 'src/users/entities/user.entity';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ParseEventDataPipe } from 'src/core/pipes/parse-event-data.pipe';
 import { CreateEventDto } from './dto/create-event.dto';
+import { Throttle } from '@nestjs/throttler';
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventService: EventsService) {}
@@ -33,6 +35,7 @@ export class EventsController {
 
   @Post('create')
   @Roles(UserRole.ORGANIZER)
+  @Throttle({ default: { limit: 1, ttl: 10000 } })
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'bannerImage', maxCount: 1 },
@@ -65,5 +68,11 @@ export class EventsController {
       files.mainImage[0],
       userId,
     );
+  }
+
+  @Get(':id')
+  @Public()
+  async getEventDetail(@Param('id') id: string) {
+    return this.eventService.getEventDetail(id);
   }
 }
