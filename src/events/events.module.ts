@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { EventService } from './events.service';
-import { EventController } from './events.controller';
+import { EventsService } from './events.service';
+import { EventsController } from './events.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EventEntity } from './entities/event.entity';
 import { EventSessionEntity } from 'src/event-session/entities/event-session.entity';
@@ -14,7 +14,7 @@ import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
     TypeOrmModule.forFeature([OrganizerEntity]),
     CloudinaryModule,
   ],
-  controllers: [EventController],
-  providers: [EventService],
+  controllers: [EventsController],
+  providers: [EventsService],
 })
 export class EventsModule {}

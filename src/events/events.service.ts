@@ -9,7 +9,7 @@ import { CreateEventDto } from './dto/create-event.dto';
 import { OrganizerEntity } from '../organizers/entities/organizer.entity';
 
 @Injectable()
-export class EventService {
+export class EventsService {
   constructor(
     @InjectRepository(EventEntity)
     private readonly eventRepository: Repository<EventEntity>,
@@ -74,5 +74,22 @@ export class EventService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async getEvents() {
+    return this.eventRepository.find({
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+  }
+
+  async getFeaturedEvents() {
+    // For now, same as getEvents
+    return this.eventRepository.find({
+      order: {
+        createdAt: 'DESC',
+      },
+    });
   }
 }

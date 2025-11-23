@@ -17,6 +17,13 @@ export enum EventStatus {
   ENDED = 'ended',
   CANCELLED = 'cancelled',
 }
+export enum EventType {
+  SPORT = 'sport',
+  LIVE_MUSIC = 'live music',
+  CONCERT = 'concert',
+  FESTIVAL = 'festival',
+  OTHER = 'other',
+}
 @Entity('events')
 export class EventEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -49,6 +56,13 @@ export class EventEntity {
     default: EventStatus.UPCOMING,
   })
   status: EventStatus;
+
+  @Column({
+    type: 'enum',
+    enum: EventType,
+    default: EventType.OTHER,
+  })
+  eventType: EventType;
 
   @OneToMany(() => EventSessionEntity, (session) => session.event)
   sessions: EventSessionEntity[];

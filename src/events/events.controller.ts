@@ -7,16 +7,29 @@ import {
   UploadedFiles,
   Request,
   BadRequestException,
+  Get,
 } from '@nestjs/common';
-import { EventService } from './events.service';
-import { Roles } from 'src/auth/decorators/auth.decorator';
+import { EventsService } from './events.service';
+import { Public, Roles } from 'src/auth/decorators/auth.decorator';
 import { UserRole } from 'src/users/entities/user.entity';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ParseEventDataPipe } from 'src/core/pipes/parse-event-data.pipe';
 import { CreateEventDto } from './dto/create-event.dto';
 @Controller('events')
-export class EventController {
-  constructor(private readonly eventService: EventService) {}
+export class EventsController {
+  constructor(private readonly eventService: EventsService) {}
+
+  @Get()
+  @Public()
+  getEvents() {
+    return this.eventService.getEvents();
+  }
+
+  @Get('featured')
+  @Public()
+  getFeaturedEvents() {
+    return this.eventService.getFeaturedEvents();
+  }
 
   @Post('create')
   @Roles(UserRole.ORGANIZER)
