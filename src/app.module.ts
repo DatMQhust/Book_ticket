@@ -17,6 +17,8 @@ import { TicketTypeModule } from './ticket-type/ticket-type.module';
 import { EventSessionModule } from './event-session/event-session.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { BookingsModule } from './bookings/bookings.module';
+import { RedisModule } from '@nestjs-modules/ioredis';
 @Module({
   imports: [
     ThrottlerModule.forRoot([
@@ -30,6 +32,13 @@ import { ThrottlerModule } from '@nestjs/throttler';
       load: configs,
       envFilePath: [`.env.${process.env.NODE_ENV}`],
     }),
+    RedisModule.forRoot({
+      type: 'single',
+      url: process.env.REDIS_URL || 'redis://localhost:6379',
+      options: {
+        keyPrefix: 'highshow:',
+      },
+    }),
     UsersModule,
     DatabaseModule,
     TestModule,
@@ -41,6 +50,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     TicketTypeModule,
     EventSessionModule,
     CloudinaryModule,
+    BookingsModule,
   ],
   controllers: [AppController],
   providers: [
