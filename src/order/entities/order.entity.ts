@@ -1,3 +1,4 @@
+// order.entity.ts
 import { UserEntity } from '../../users/entities/user.entity';
 import {
   Entity,
@@ -10,11 +11,14 @@ import {
   OneToMany,
 } from 'typeorm';
 import { TicketEntity } from '../../ticket/entities/ticket.entity';
+
 export enum OrderStatus {
   PENDING = 'pending',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
+  COMPLETED = 'completed', // Đã thanh toán
+  CANCELLED = 'cancelled', // Hủy / Hết hạn
+  REFUNDED = 'refunded', // Đã hoàn tiền
 }
+
 @Entity('orders')
 export class OrderEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -27,12 +31,22 @@ export class OrderEntity {
   @Column({ type: 'int' })
   totalPrice: number;
 
-  // Một đơn hàng sẽ có nhiều vé (ví dụ: 5 vé VIP)
-  @OneToMany(() => TicketEntity, (ticket) => ticket.order)
+  @Column({ type: 'int', default: 0 })
+  totalQuantity: number;
+
+  @OneToMany(() => TicketEntity, (ticket) => ticket.order, {
+    cascade: true,
+  })
   tickets: TicketEntity[];
 
   @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.PENDING })
   status: OrderStatus;
+
+  @Column({ type: 'varchar', nullable: true })
+  paymentMethod: string; // VD: 'MOMO', 'STRIPE', 'BANK_TRANSFER'
+
+  @Column({ type: 'varchar', nullable: true })
+  transactionId: string; // Mã giao dịch từ phía cổng thanh toán (dùng để tra soát)
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
