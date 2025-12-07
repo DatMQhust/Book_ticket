@@ -11,8 +11,6 @@ import { CreateEventDto } from '../../events/dto/create-event.dto';
 @Injectable()
 export class ParseEventDataPipe implements PipeTransform {
   async transform(value: string, metadata: ArgumentMetadata) {
-    console.log('[DEBUG] Pipe received this raw value for "data":', value);
-    console.log('[DEBUG] Type of value:', typeof value);
     if (metadata.type !== 'body' || !value) {
       throw new BadRequestException('Validation failed: No data provided');
     }

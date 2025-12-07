@@ -1,26 +1,35 @@
-import { Injectable } from '@nestjs/common';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { OrderEntity } from './entities/order.entity';
 
 @Injectable()
 export class OrderService {
-  create(createOrderDto: CreateOrderDto) {
-    return 'This action adds a new order';
-  }
+  constructor(
+    private readonly dataSource: DataSource,
+    @InjectRepository(OrderEntity)
+    private readonly orderRepository: Repository<OrderEntity>,
+  ) {}
+  async getOrderById(id: string) {
+    const order = await this.orderRepository.findOne({
+      where: { id },
+      relations: ['tickets', 'user'],
+    });
+    if (!order) {
+      throw new NotFoundException('Không tìm thấy đơn hàng');
+    }
 
-  findAll() {
-    return `This action returns all order`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} order`;
-  }
-
-  update(id: number, updateOrderDto: UpdateOrderDto) {
-    return `This action updates a #${id} order`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} order`;
+    return {
+      id: order.id,
+      status: order.status,
+      totalPrice: order.totalPrice,
+      transactionId: order.transactionId,
+      paymentMethod: order.paymentMethod,
+      tickets: order.tickets.map((ticket) => ({
+        id: ticket.id,
+        accessCode: ticket.accessCode,
+        status: ticket.status,
+      })),
+    };
   }
 }

@@ -1,6 +1,7 @@
-import { Controller, Post, Body, Request } from '@nestjs/common';
+import { Controller, Post, Body, Request, Headers } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
+import { Public } from 'src/auth/decorators/auth.decorator';
 
 @Controller('bookings')
 export class BookingsController {
@@ -16,9 +17,23 @@ export class BookingsController {
     );
   }
 
-  @Post('confirm')
-  async confirm(@Request() req, @Body() body: { ticketTypeId: string }) {
+  @Post('initiate-payment')
+  async initiatePayment(
+    @Request() req,
+    @Body() body: { ticketTypeId: string },
+  ) {
     const userId = req.user?.id;
-    return this.bookingsService.confirmBooking(userId, body.ticketTypeId);
+    return this.bookingsService.initiatePayment(userId, body.ticketTypeId);
+  }
+
+  @Post('webhook')
+  @Public()
+  async handleWebhook(
+    @Body() body: any,
+    @Headers('authorization') authHeader: string, // Lấy Header Authorization
+  ) {
+    // SePay yêu cầu trả về success true ngay lập tức hoặc sau khi xử lý xong
+    // Nếu không SePay sẽ gửi lại nhiều lần
+    return this.bookingsService.finalizePaymentWebhook(body, authHeader);
   }
 }
