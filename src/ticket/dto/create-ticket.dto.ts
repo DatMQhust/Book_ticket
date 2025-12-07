@@ -1,1 +1,4 @@
-export class CreateTicketDto {}
+export class CreateTicketDto {
+  accessCode: string;
+  organizerId: string;
+}

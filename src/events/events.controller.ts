@@ -9,6 +9,7 @@ import {
   BadRequestException,
   Get,
   Param,
+  Query,
 } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { Public, Roles } from 'src/auth/decorators/auth.decorator';
@@ -16,6 +17,7 @@ import { UserRole } from 'src/users/entities/user.entity';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ParseEventDataPipe } from 'src/core/pipes/parse-event-data.pipe';
 import { CreateEventDto } from './dto/create-event.dto';
+import { QueryEventDto } from './dto/query-event.dto';
 import { Throttle } from '@nestjs/throttler';
 @Controller('events')
 export class EventsController {
@@ -23,14 +25,14 @@ export class EventsController {
 
   @Get()
   @Public()
-  getEvents() {
-    return this.eventService.getEvents();
+  getEvents(@Query() query: QueryEventDto) {
+    return this.eventService.getEvents(query);
   }
 
   @Get('featured')
   @Public()
-  getFeaturedEvents() {
-    return this.eventService.getFeaturedEvents();
+  getFeaturedEvents(@Query() query: QueryEventDto) {
+    return this.eventService.getFeaturedEvents(query);
   }
 
   @Post('create')
