@@ -14,19 +14,21 @@ export class OrganizationPaymentConfigEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  // PayOS Client ID
+  // --- SEPAY CONFIG ---
+  // API Key lấy từ SePay (Dùng để verify webhook)
   @Column({ type: 'varchar' })
-  payosClientId: string;
+  sepayApiKey: string;
 
-  // PayOS API Key
+  // Số tài khoản ngân hàng nhận tiền
   @Column({ type: 'varchar' })
-  payosApiKey: string;
+  bankAccount: string;
 
-  // PayOS Checksum Key
+  // Mã ngân hàng (VD: MB, VCB, TPBank...)
   @Column({ type: 'varchar' })
-  payosChecksumKey: string;
+  bankCode: string;
 
-  // Liên kết 1-1 với Organization (Mỗi BTC có 1 cấu hình thanh toán)
+  // --------------------
+
   @OneToOne(() => OrganizerEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'organizerId' })
   organizer: OrganizerEntity;

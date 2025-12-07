@@ -1,6 +1,7 @@
-import { Controller, Post, Body, Request } from '@nestjs/common';
+import { Controller, Post, Body, Request, Headers } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
+import { Public } from 'src/auth/decorators/auth.decorator';
 
 @Controller('bookings')
 export class BookingsController {
@@ -26,10 +27,13 @@ export class BookingsController {
   }
 
   @Post('webhook')
-  async handleWebhook(@Body() body: any) {
-    if (!body || !body.data) {
-      return { success: false };
-    }
-    return this.bookingsService.finalizePaymentWebhook(body);
+  @Public()
+  async handleWebhook(
+    @Body() body: any,
+    @Headers('authorization') authHeader: string, // Lấy Header Authorization
+  ) {
+    // SePay yêu cầu trả về success true ngay lập tức hoặc sau khi xử lý xong
+    // Nếu không SePay sẽ gửi lại nhiều lần
+    return this.bookingsService.finalizePaymentWebhook(body, authHeader);
   }
 }
