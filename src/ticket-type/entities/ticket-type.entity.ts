@@ -49,14 +49,12 @@ export class TicketTypeEntity {
   @Column({ type: 'enum', enum: TicketStatus, default: TicketStatus.AVAILABLE })
   status: TicketStatus;
 
-  // Một loại vé CÓ THỂ liên kết với Event (cho vé "Toàn sự kiện")
   @ManyToOne(() => EventEntity, (event) => event.ticketTypes, {
     nullable: true,
   })
   @JoinColumn({ name: 'eventId' })
   event: EventEntity;
 
-  // Hoặc, một loại vé CÓ THỂ liên kết với Session (cho vé "Theo phiên")
   @ManyToOne(() => EventSessionEntity, { nullable: true })
   @JoinColumn({ name: 'eventSessionId' })
   session: EventSessionEntity;

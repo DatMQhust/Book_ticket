@@ -3,10 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TicketTypeEntity } from './entities/ticket-type.entity';
 import { EventSessionEntity } from '../event-session/entities/event-session.entity';
-import { CreateTicketTypeDto } from './dto/create-ticket-type.dto'; // Tận dụng DTO cũ
+import { CreateTicketTypeDto } from './dto/create-ticket-type.dto';
 import { Roles } from 'src/auth/decorators/auth.decorator';
 import { UserRole } from 'src/users/entities/user.entity';
-// Import Auth Guard, User decorator...
 
 @Controller('ticket-types')
 export class TicketTypeController {
@@ -24,7 +23,6 @@ export class TicketTypeController {
   ) {
     const { sessionId, ticketData } = body;
 
-    // 1. Kiểm tra session có tồn tại không
     const session = await this.sessionRepo.findOne({
       where: { id: sessionId },
       relations: ['event', 'event.organizer'],

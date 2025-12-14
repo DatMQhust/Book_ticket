@@ -22,7 +22,7 @@ export class EventSessionEntity {
   id: string;
 
   @Column({ type: 'varchar', length: 200 })
-  name: string; // Ví dụ: "Ngày 1", "Buổi sáng", "Show diễn tối"
+  name: string;
 
   @Column({ type: 'timestamptz' })
   startTime: Date;

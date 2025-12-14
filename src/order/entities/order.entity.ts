@@ -1,4 +1,3 @@
-// order.entity.ts
 import { UserEntity } from '../../users/entities/user.entity';
 import {
   Entity,
@@ -14,9 +13,9 @@ import { TicketEntity } from '../../ticket/entities/ticket.entity';
 
 export enum OrderStatus {
   PENDING = 'pending',
-  COMPLETED = 'completed', // Đã thanh toán
-  CANCELLED = 'cancelled', // Hủy / Hết hạn
-  REFUNDED = 'refunded', // Đã hoàn tiền
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  REFUNDED = 'refunded',
 }
 
 @Entity('orders')
@@ -43,10 +42,10 @@ export class OrderEntity {
   status: OrderStatus;
 
   @Column({ type: 'varchar', nullable: true })
-  paymentMethod: string; // VD: 'MOMO', 'STRIPE', 'BANK_TRANSFER'
+  paymentMethod: string;
 
   @Column({ type: 'varchar', nullable: true })
-  transactionId: string; // Mã giao dịch từ phía cổng thanh toán (dùng để tra soát)
+  transactionId: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;

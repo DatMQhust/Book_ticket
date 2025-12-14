@@ -100,16 +100,15 @@ export class AuthService {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: this.configService.get<string>('NODE_ENV') === 'production',
-      sameSite: 'lax', // Thay đổi từ 'none' sang 'lax'
-      // maxAge: 15 * 60 * 1000,  -real
-      maxAge: 7 * 24 * 60 * 60 * 1000, // test in local
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: this.configService.get<string>('NODE_ENV') === 'production',
-      sameSite: 'lax', // Thay đổi từ 'none' sang 'lax'
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
     return {

@@ -116,7 +116,6 @@ export class BookingsService implements OnModuleInit {
     };
   }
 
-  // --- HÀM MỚI: Lấy config SePay thay vì PayOS ---
   private async getSePayConfig(
     ticketTypeId: string,
   ): Promise<OrganizationPaymentConfigEntity> {
@@ -173,8 +172,8 @@ export class BookingsService implements OnModuleInit {
         totalPrice: totalPrice,
         totalQuantity: reservation.quantity,
         status: OrderStatus.PENDING,
-        paymentMethod: 'SEPAY', // Đổi tên method
-        transactionId: orderCode, // Lưu chuỗi này để đối soát
+        paymentMethod: 'SEPAY',
+        transactionId: orderCode,
       });
 
       const savedOrder = await queryRunner.manager.save(order);
@@ -210,29 +209,13 @@ export class BookingsService implements OnModuleInit {
   }
 
   async finalizePaymentWebhook(webhookData: any, authHeader: string) {
-    // webhookData mẫu của SePay:
-    // { gateway, transactionDate, accountNumber, code, content, transferType, transferAmount, ... }
-
     const { content, transferAmount } = webhookData;
-
-    // 1. Tách mã đơn hàng từ nội dung chuyển khoản
-    // Giả sử content là "HS123456 chuyen khoan" -> Cần tìm chuỗi chứa HS...
-    // Ở đây mình tìm đơn giản: Tìm trong DB xem có đơn nào có transactionId nằm trong content không
-
-    // Lưu ý: Để bảo mật, cần biết đơn hàng thuộc BTC nào để check API Key của BTC đó.
-    // Tuy nhiên SePay webhook cấu hình chung cho 1 domain.
-    // Nếu hệ thống Đạt đa người bán (Multi-tenant), Đạt cần lưu global config hoặc check logic khác.
-    // Ở đây tôi giả sử Đạt check token từ biến môi trường hoặc tìm Order trước.
-
-    // Bước 1: Tìm Order PENDING có mã (transactionId) nằm trong nội dung chuyển khoản
-    // Dùng Like '%HS123456%'
-    // Để an toàn và nhanh, ta nên regex cái orderCode từ content trước (nếu format cố định HSxxxx)
     const match = content?.match(/HS\d+/);
     const orderCode = match ? match[0] : null;
 
     if (!orderCode) {
       this.logger.warn(`Không tìm thấy mã đơn hàng trong nội dung: ${content}`);
-      return { success: true }; // Vẫn trả true để SePay không gửi lại
+      return { success: true };
     }
 
     const order = await this.dataSource.getRepository(OrderEntity).findOne({
@@ -247,37 +230,29 @@ export class BookingsService implements OnModuleInit {
 
     if (order.status === OrderStatus.COMPLETED) return { success: true };
 
-    // Bước 2: Lấy ticketTypeId từ Redis (đã lưu lúc init) hoặc query từ order -> items (nếu có relation)
-    // Ở đây dùng redis như code cũ
     const ticketTypeId = await this.redis.get(`order_context:${orderCode}`);
-    if (!ticketTypeId) return { success: false }; // Có thể đã hết hạn redis context
+    if (!ticketTypeId) return { success: false };
 
-    // Bước 3: Verify API Key (Bảo mật)
     const paymentConfig = await this.getSePayConfig(ticketTypeId);
 
-    // SePay gửi header: "Bearer YOUR_API_KEY"
     if (authHeader !== `Apikey ${paymentConfig.sepayApiKey}`) {
       this.logger.error(`Fake Webhook detected for Order ${orderCode}`);
-      // Nếu API Key sai -> Có thể là tấn công -> Reject
       return { success: false };
     }
 
-    // Bước 4: Kiểm tra số tiền
     if (transferAmount < order.totalPrice) {
       this.logger.warn(
         `Chuyển thiếu tiền. Order: ${order.totalPrice}, Nhận: ${transferAmount}`,
       );
-      return { success: true }; // Vẫn return true để ngắt webhook, xử lý thiếu tiền sau (manual)
+      return { success: true };
     }
 
-    // --- LOGIC XỬ LÝ ORDER THÀNH CÔNG (GIỐNG HỆT CŨ) ---
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
       order.status = OrderStatus.COMPLETED;
-      // Có thể lưu thêm thông tin giao dịch ngân hàng vào order nếu cần
       await queryRunner.manager.save(order);
 
       const ticketType = await queryRunner.manager.findOne(TicketTypeEntity, {

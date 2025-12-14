@@ -30,10 +30,8 @@ export class BookingsController {
   @Public()
   async handleWebhook(
     @Body() body: any,
-    @Headers('authorization') authHeader: string, // Lấy Header Authorization
+    @Headers('authorization') authHeader: string,
   ) {
-    // SePay yêu cầu trả về success true ngay lập tức hoặc sau khi xử lý xong
-    // Nếu không SePay sẽ gửi lại nhiều lần
     return this.bookingsService.finalizePaymentWebhook(body, authHeader);
   }
 }

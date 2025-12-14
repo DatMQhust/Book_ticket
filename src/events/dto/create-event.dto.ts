@@ -1,4 +1,3 @@
-// src/event/dto/create-event.dto.ts
 import {
   IsString,
   IsNotEmpty,
@@ -40,9 +39,8 @@ export class CreateEventDto {
   @IsNotEmpty()
   ward: string;
 
-  // Validate mảng sessions
   @IsArray()
-  @ValidateNested({ each: true }) // Validate từng object trong mảng
-  @Type(() => CreateEventSessionDto) // Chỉ định kiểu cho mảng lồng
+  @ValidateNested({ each: true })
+  @Type(() => CreateEventSessionDto)
   sessions: CreateEventSessionDto[];
 }

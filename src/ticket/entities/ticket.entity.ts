@@ -1,4 +1,3 @@
-// ticket.entity.ts
 import { UserEntity } from '../../users/entities/user.entity';
 import {
   Entity,

@@ -1,5 +1,3 @@
-// src/cloudinary/cloudinary.service.ts
-
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import {
   UploadApiErrorResponse,
@@ -9,7 +7,6 @@ import {
 import { Express } from 'express';
 const streamifier = require('streamifier');
 
-// Định nghĩa kiểu trả về
 export type CloudinaryUploadResponse =
   | UploadApiResponse
   | UploadApiErrorResponse;

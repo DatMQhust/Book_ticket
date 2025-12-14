@@ -1,4 +1,3 @@
-// src/event/event.controller.ts
 import {
   Controller,
   Post,
@@ -61,7 +60,6 @@ export class EventsController {
       );
     }
 
-    // 3. Gọi Service
     return this.eventService.createEvent(
       createEventDto,
       files.bannerImage[0],

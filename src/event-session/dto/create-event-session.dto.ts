@@ -1,4 +1,3 @@
-// src/event-session/dto/create-event-session.dto.ts
 import {
   IsString,
   IsNotEmpty,
@@ -14,8 +13,6 @@ export class CreateEventSessionDto {
   @IsNotEmpty()
   name: string;
 
-  // Dùng @Type(() => Date) để class-transformer
-  // tự động biến chuỗi ISO (string) thành object Date
   @IsDate()
   @Type(() => Date)
   @IsNotEmpty()

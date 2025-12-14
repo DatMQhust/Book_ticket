@@ -13,13 +13,6 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  // app.useGlobalPipes(
-  //   new ValidationPipe({
-  //     whitelist: true, // bỏ field thừa trong DTO
-  //     forbidNonWhitelisted: true, // báo lỗi nếu field không hợp lệ
-  //     transform: true, // tự convert kiểu dữ liệu
-  //   }),
-  // );
   const PORT = process.env.PORT ?? 8000;
   await app.listen(PORT);
 

@@ -1,10 +1,9 @@
-// src/ticket-type/dto/create-ticket-type.dto.ts
 import { IsString, IsNotEmpty, IsInt, Min, IsOptional } from 'class-validator';
 
 export class CreateTicketTypeDto {
   @IsString()
   @IsNotEmpty()
-  name: string; // VD: VIP, Regular
+  name: string;
 
   @IsInt()
   @Min(0)
@@ -20,5 +19,5 @@ export class CreateTicketTypeDto {
 
   @IsInt()
   @IsOptional()
-  rank: number; // 1: VIP, 2: Standard (Dùng để sắp xếp hiển thị)
+  rank: number;
 }
