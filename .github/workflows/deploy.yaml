@@ -9,6 +9,7 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: asia-southeast1
   REPO_NAME: highshow-repo
+  IMAGE_NAME: backend
   SERVICE_NAME: highshow-backend 
 
 jobs:
