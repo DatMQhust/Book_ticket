@@ -10,7 +10,7 @@ env:
   REGION: asia-southeast1
   REPO_NAME: highshow-repo
   IMAGE_NAME: backend
-  SERVICE_NAME: highshow-backend 
+  SERVICE_NAME: highshow-backend
 
 jobs:
   deploy:
@@ -34,7 +34,7 @@ jobs:
 
       - name: Build and Push Container
         run: |
-          IMAGE_TAG=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          IMAGE_TAG=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           docker build -t $IMAGE_TAG .
           docker push $IMAGE_TAG
 
