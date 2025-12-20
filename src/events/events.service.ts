@@ -5,7 +5,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EventEntity } from './entities/event.entity';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, ILike } from 'typeorm';
+import { GetEventsQueryDto } from './dto/get-events-query.dto';
 import { EventSessionEntity } from '../event-session/entities/event-session.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -76,21 +77,112 @@ export class EventsService {
     }
   }
 
-  async getEvents() {
-    return this.eventRepository.find({
+  async getEvents(query: GetEventsQueryDto) {
+    const {
+      limit = 12,
+      page = 1,
+      sortBy = 'createdAt',
+      order = 'DESC',
+      eventType,
+      status,
+      province,
+      search,
+    } = query;
+
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (eventType) {
+      where.eventType = eventType;
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (province) {
+      where.province = ILike(`%${province}%`);
+    }
+
+    if (search) {
+      where.name = ILike(`%${search}%`);
+    }
+
+    const [events, total] = await this.eventRepository.findAndCount({
+      where,
       order: {
-        createdAt: 'DESC',
+        [sortBy]: order,
       },
+      take: limit,
+      skip,
+      relations: ['organizer'],
     });
+
+    return {
+      data: events,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
-  async getFeaturedEvents() {
-    // For now, same as getEvents
-    return this.eventRepository.find({
+  async getFeaturedEvents(query: GetEventsQueryDto) {
+    const {
+      limit = 12,
+      page = 1,
+      sortBy = 'createdAt',
+      order = 'DESC',
+      eventType,
+      status,
+      province,
+      search,
+    } = query;
+
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (eventType) {
+      where.eventType = eventType;
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (province) {
+      where.province = ILike(`%${province}%`);
+    }
+
+    if (search) {
+      where.name = ILike(`%${search}%`);
+    }
+
+    // Featured events logic: you can add additional criteria here
+    // For example: events with most bookings, highest rated, etc.
+    const [events, total] = await this.eventRepository.findAndCount({
+      where,
       order: {
-        createdAt: 'DESC',
+        [sortBy]: order,
       },
+      take: limit,
+      skip,
+      relations: ['organizer', 'sessions'],
     });
+
+    return {
+      data: events,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
   async getEventDetail(id: string): Promise<EventEntity> {
     const event = await this.eventRepository.findOne({
