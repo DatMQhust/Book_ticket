@@ -18,6 +18,7 @@ import { ParseEventDataPipe } from 'src/core/pipes/parse-event-data.pipe';
 import { CreateEventDto } from './dto/create-event.dto';
 import { GetEventsQueryDto } from './dto/get-events-query.dto';
 import { Throttle } from '@nestjs/throttler';
+import { AddTicketTypeToEventDto } from './dto/add-ticket-type.dto';
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventService: EventsService) {}
@@ -74,5 +75,17 @@ export class EventsController {
   @Public()
   async getEventDetail(@Param('id') id: string) {
     return this.eventService.getEventDetail(id);
+  }
+
+  @Post('add-ticket-type')
+  @Roles(UserRole.ORGANIZER)
+  async addTicketTypeToEvent(@Body() dto: AddTicketTypeToEventDto) {
+    return this.eventService.addTicketTypeToEvent(dto.eventId, {
+      name: dto.name,
+      price: dto.price,
+      quantity: dto.quantity,
+      description: dto.description,
+      rank: dto.rank,
+    });
   }
 }

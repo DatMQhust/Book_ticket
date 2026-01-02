@@ -11,6 +11,7 @@ import { EventSessionEntity } from '../event-session/entities/event-session.enti
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { OrganizerEntity } from '../organizers/entities/organizer.entity';
+import { TicketTypeEntity } from '../ticket-type/entities/ticket-type.entity';
 
 @Injectable()
 export class EventsService {
@@ -20,6 +21,9 @@ export class EventsService {
 
     @InjectRepository(EventSessionEntity)
     private readonly sessionRepository: Repository<EventSessionEntity>,
+
+    @InjectRepository(TicketTypeEntity)
+    private readonly ticketTypeRepository: Repository<TicketTypeEntity>,
 
     private readonly dataSource: DataSource,
 
@@ -55,14 +59,35 @@ export class EventsService {
 
       const savedEvent = await queryRunner.manager.save(event);
 
-      const sessions = createEventDto.sessions.map((sessionDto) => {
-        return this.sessionRepository.create({
-          ...sessionDto,
-          event: savedEvent,
-        });
-      });
+      if (createEventDto.sessions && createEventDto.sessions.length > 0) {
+        for (const sessionDto of createEventDto.sessions) {
+          const session = this.sessionRepository.create({
+            name: sessionDto.name,
+            startTime: sessionDto.startTime,
+            endTime: sessionDto.endTime,
+            event: savedEvent,
+          });
 
-      await queryRunner.manager.save(sessions);
+          const savedSession = await queryRunner.manager.save(session);
+
+          if (sessionDto.ticketTypes && sessionDto.ticketTypes.length > 0) {
+            const ticketTypes = sessionDto.ticketTypes.map((ticketDto) => {
+              return this.ticketTypeRepository.create({
+                name: ticketDto.name,
+                price: ticketDto.price,
+                quantity: ticketDto.quantity,
+                description: ticketDto.description || '',
+                rank: ticketDto.rank || 1,
+                sold: 0,
+                session: savedSession,
+                event: null,
+              });
+            });
+
+            await queryRunner.manager.save(ticketTypes);
+          }
+        }
+      }
       await queryRunner.commitTransaction();
 
       return savedEvent;
@@ -75,6 +100,42 @@ export class EventsService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async addTicketTypeToEvent(
+    eventId: string,
+    ticketData: {
+      name: string;
+      price: number;
+      quantity: number;
+      description: string;
+      rank?: number;
+    },
+  ): Promise<TicketTypeEntity> {
+    const event = await this.eventRepository.findOne({
+      where: { id: eventId },
+      relations: ['sessions'],
+    });
+
+    if (!event) {
+      throw new NotFoundException(`Event with ID ${eventId} not found`);
+    }
+
+    if (event.sessions && event.sessions.length > 0) {
+      throw new InternalServerErrorException(
+        'Cannot add ticket type directly to event with sessions. Use add-to-session endpoint instead.',
+      );
+    }
+
+    const ticketType = this.ticketTypeRepository.create({
+      ...ticketData,
+      sold: 0,
+      rank: ticketData.rank || 1,
+      event: event,
+      session: null,
+    });
+
+    return await this.ticketTypeRepository.save(ticketType);
   }
 
   async getEvents(query: GetEventsQueryDto) {

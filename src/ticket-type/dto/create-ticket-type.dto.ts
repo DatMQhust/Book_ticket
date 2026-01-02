@@ -14,10 +14,15 @@ export class CreateTicketTypeDto {
   quantity: number;
 
   @IsString()
-  @IsNotEmpty()
-  description: string;
+  @IsOptional()
+  description?: string;
 
   @IsInt()
   @IsOptional()
-  rank: number;
+  rank?: number;
+
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  sold?: number;
 }

@@ -4,6 +4,7 @@ import {
   IsDate,
   IsArray,
   ValidateNested,
+  IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateEventSessionDto } from '../../event-session/dto/create-event-session.dto';
@@ -39,8 +40,9 @@ export class CreateEventDto {
   @IsNotEmpty()
   ward: string;
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateEventSessionDto)
-  sessions: CreateEventSessionDto[];
+  sessions?: CreateEventSessionDto[];
 }

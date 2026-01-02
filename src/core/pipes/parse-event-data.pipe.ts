@@ -25,11 +25,37 @@ export class ParseEventDataPipe implements PipeTransform {
 
     const dtoInstance = plainToInstance(CreateEventDto, parsedData);
 
-    // 3. Validate DTO
-    const errors = await validate(dtoInstance);
+    const errors = await validate(dtoInstance, {
+      validationError: { target: false },
+    });
 
     if (errors.length > 0) {
-      const errorMessages = errors.map((err) => Object.values(err.constraints));
+      const extractErrors = (err: any, parentPath = ''): string[] => {
+        const currentPath = parentPath
+          ? `${parentPath}.${err.property}`
+          : err.property;
+
+        if (err.constraints) {
+          return Object.values(err.constraints).map(
+            (msg: any) => `${currentPath}: ${msg}`,
+          );
+        }
+
+        if (err.children && err.children.length > 0) {
+          const childErrors = err.children
+            .map((child: any) => extractErrors(child, currentPath))
+            .flat();
+
+          if (childErrors.length > 0) {
+            return childErrors;
+          }
+        }
+
+        return [`Validation error in ${currentPath}`];
+      };
+
+      const errorMessages = errors.map((err) => extractErrors(err)).flat();
+
       throw new BadRequestException(
         `Validation failed: ${errorMessages.join(', ')}`,
       );
