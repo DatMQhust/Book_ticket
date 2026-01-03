@@ -15,6 +15,7 @@ import { OrganizationPaymentConfigEntity } from '../organizers/entities/payment-
 import { UserEntity } from '../users/entities/user.entity';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
+import { PaymentEventsGateway } from './payment-events.gateway';
 
 @Injectable()
 export class BookingsService implements OnModuleInit {
@@ -24,6 +25,7 @@ export class BookingsService implements OnModuleInit {
     @InjectRedis() private readonly redis: Redis,
     private dataSource: DataSource,
     @InjectQueue('booking-queue') private bookingQueue: Queue,
+    private paymentEventsGateway: PaymentEventsGateway,
   ) {}
 
   async onModuleInit() {
@@ -289,6 +291,19 @@ export class BookingsService implements OnModuleInit {
       await this.redis.del(reservationKey);
       await this.redis.del(processingKey);
       await this.redis.del(`order_context:${orderCode}`);
+
+      this.paymentEventsGateway.emitPaymentCompleted(order.user.id, order.id, {
+        orderId: order.id,
+        orderCode: order.transactionId,
+        status: order.status,
+        totalPrice: order.totalPrice,
+        totalQuantity: order.totalQuantity,
+        tickets: tickets.map((t) => ({
+          id: t.id,
+          accessCode: t.accessCode,
+          status: t.status,
+        })),
+      });
 
       this.logger.log(`Order ${orderCode} COMPLETED via SePay.`);
       return { success: true };

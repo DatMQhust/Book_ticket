@@ -9,6 +9,8 @@ import { OrganizationPaymentConfigEntity } from 'src/organizers/entities/payment
 import { TicketTypeEntity } from 'src/ticket-type/entities/ticket-type.entity';
 import { TicketEntity } from 'src/ticket/entities/ticket.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
+import { PaymentEventsGateway } from './payment-events.gateway';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -19,6 +21,10 @@ import { UserEntity } from 'src/users/entities/user.entity';
       UserEntity,
       OrganizationPaymentConfigEntity,
     ]),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET_KEY,
+      signOptions: { expiresIn: '7d' },
+    }),
     BullModule.forRoot({
       redis: {
         host: 'localhost',
@@ -30,7 +36,7 @@ import { UserEntity } from 'src/users/entities/user.entity';
     }),
   ],
   controllers: [BookingsController],
-  providers: [BookingsService, BookingProcessor],
-  exports: [BookingsService],
+  providers: [BookingsService, BookingProcessor, PaymentEventsGateway],
+  exports: [BookingsService, PaymentEventsGateway],
 })
 export class BookingsModule {}

@@ -36,7 +36,6 @@ export const AppDataSource = new DataSource({
     TicketTypeEntity,
     EventSessionEntity,
     OrganizationPaymentConfigEntity,
-    // Add more entities here as needed
   ],
   migrations: ['src/migrations/**/*.ts'],
   migrationsTableName: 'migrations',
