@@ -48,18 +48,20 @@ export class AuthService {
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
     await this.usersService.updateRefreshToken(newUser.id, hashedRefreshToken);
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'PRODUCTION';
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'none',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 15 * 60 * 1000, // 15 phút
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'none',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
     });
     return {
@@ -74,6 +76,8 @@ export class AuthService {
   }
   async login(user: UserDto, @Res({ passthrough: true }) res: Response) {
     const { id, name, phone, email, role, isActive } = user;
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'PRODUCTION';
     const payload = {
       sub: 'token login',
       iss: 'from server',
@@ -99,15 +103,15 @@ export class AuthService {
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: this.configService.get<string>('NODE_ENV') === 'production',
-      sameSite: 'lax',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: this.configService.get<string>('NODE_ENV') === 'production',
-      sameSite: 'lax',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
@@ -119,16 +123,18 @@ export class AuthService {
 
   async logout(user: UserDto, res: Response) {
     await this.usersService.updateRefreshToken(user.id, null);
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'PRODUCTION';
     res.clearCookie('access_token', {
       httpOnly: true,
-      secure: this.configService.get<string>('NODE_ENV') === 'production',
-      sameSite: 'lax',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       path: '/',
     });
     res.clearCookie('refresh_token', {
       httpOnly: true,
-      secure: this.configService.get<string>('NODE_ENV') === 'production',
-      sameSite: 'lax',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       path: '/',
     });
     return { message: 'Logout success' };
