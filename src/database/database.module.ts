@@ -9,7 +9,7 @@ import { DatabaseService } from './database.service';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const isProduction = config.get<string>('NODE_ENV') === 'production';
+        const isProduction = config.get<string>('NODE_ENV') === 'PRODUCTION';
 
         return {
           type: 'postgres',
