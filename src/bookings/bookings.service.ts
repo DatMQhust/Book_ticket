@@ -96,19 +96,29 @@ export class BookingsService implements OnModuleInit {
       ttl,
     );
 
-    await this.bookingQueue.add(
-      'release-ticket',
-      {
-        userId,
-        ticketTypeId,
-        quantity,
-        reservationKey,
-      },
-      {
-        delay: ttl * 1000,
-        removeOnComplete: true,
-      },
-    );
+    try {
+      await this.bookingQueue.add(
+        'release-ticket',
+        {
+          userId,
+          ticketTypeId,
+          quantity,
+          reservationKey,
+        },
+        {
+          delay: ttl * 1000,
+          removeOnComplete: true,
+        },
+      );
+    } catch (error) {
+      this.logger.error(`Failed to add release-ticket job: ${error.message}`);
+      // Rollback: Xóa reservation và hoàn trả vé vào kho
+      await this.redis.del(reservationKey);
+      await this.redis.incrby(stockKey, quantity);
+      throw new BadRequestException(
+        'Lỗi hệ thống giữ vé, vui lòng thử lại sau.',
+      );
+    }
 
     return {
       success: true,

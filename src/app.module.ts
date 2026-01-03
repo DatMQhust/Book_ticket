@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
 import configs from './config/index';
 import { TestModule } from '../test/testConfig/test.module';
@@ -19,6 +19,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { BookingsModule } from './bookings/bookings.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
+import { BullModule } from '@nestjs/bull';
 @Module({
   imports: [
     ThrottlerModule.forRoot([
@@ -32,11 +33,23 @@ import { RedisModule } from '@nestjs-modules/ioredis';
       load: configs,
       envFilePath: [`.env.${process.env.NODE_ENV}`],
     }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        redis: {
+          host: configService.get<string>('REDIS_HOST'),
+          port: configService.get<number>('REDIS_PORT') || 6379,
+          family: 4,
+        },
+      }),
+      inject: [ConfigService],
+    }),
     RedisModule.forRoot({
       type: 'single',
       url: process.env.REDIS_URL || 'redis://localhost:6379',
       options: {
         keyPrefix: 'highshow:',
+        family: 4,
       },
     }),
     UsersModule,
