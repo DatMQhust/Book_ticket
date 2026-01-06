@@ -66,7 +66,9 @@ export class EventEntity {
   })
   eventType: EventType;
 
-  @OneToMany(() => EventSessionEntity, (session) => session.event)
+  @OneToMany(() => EventSessionEntity, (session) => session.event, {
+    cascade: true,
+  })
   sessions: EventSessionEntity[];
 
   @Column({ type: 'varchar', length: 500, nullable: true })

@@ -12,6 +12,7 @@ import {
 import { OrganizersService } from './organizers.service';
 import { CreateOrganizerDto } from './dto/create-organizer.dto';
 import { UpdateOrganizerDto } from './dto/update-organizer.dto';
+import { UpdateEventDto } from '../events/dto/update-event.dto';
 
 @Controller('organizers')
 export class OrganizersController {
@@ -44,5 +45,39 @@ export class OrganizersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {
     return this.organizersService.remove(id);
+  }
+  @Post('/get-id-by-user')
+  getOrganizerIdByUserId(@Body('userId') userId: string) {
+    return this.organizersService.getOrganizerIdByUserId(userId);
+  }
+
+  @Get(':id/events')
+  getEvents(@Param('id') id: string) {
+    return this.organizersService.getEventsByOrganizer(id);
+  }
+
+  @Get(':id/revenue')
+  getRevenue(@Param('id') id: string) {
+    return this.organizersService.getOrganizerRevenue(id);
+  }
+
+  @Get(':id/events/:eventId')
+  getEventDetail(@Param('id') id: string, @Param('eventId') eventId: string) {
+    return this.organizersService.getEventDetail(id, eventId);
+  }
+
+  @Patch(':id/events/:eventId')
+  updateEvent(
+    @Param('id') id: string,
+    @Param('eventId') eventId: string,
+    @Body() updateEventDto: UpdateEventDto,
+  ) {
+    return this.organizersService.updateEvent(id, eventId, updateEventDto);
+  }
+
+  @Delete(':id/events/:eventId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteEvent(@Param('id') id: string, @Param('eventId') eventId: string) {
+    return this.organizersService.deleteEvent(id, eventId);
   }
 }
