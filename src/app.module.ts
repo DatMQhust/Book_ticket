@@ -20,6 +20,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { BookingsModule } from './bookings/bookings.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { BullModule } from '@nestjs/bull';
+import { AdminModule } from './admin/admin.module';
 @Module({
   imports: [
     ThrottlerModule.forRoot([
@@ -64,6 +65,7 @@ import { BullModule } from '@nestjs/bull';
     EventSessionModule,
     CloudinaryModule,
     BookingsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [
