@@ -53,25 +53,46 @@ export class BookingsService implements OnModuleInit {
     const stockKey = `ticket_stock:${ticketTypeId}`;
     const reservationKey = `reservation:${userId}:${ticketTypeId}`;
 
-    const existing = await this.redis.get(reservationKey);
-    if (existing) {
-      throw new BadRequestException(
-        'Bạn đang có vé đang giữ. Vui lòng thanh toán.',
-      );
-    }
+    const reservationData = {
+      ticketTypeId,
+      userId,
+      quantity,
+      timestamp: Date.now(),
+    };
+    const ttl = 600;
+    const reservationJson = JSON.stringify(reservationData);
 
     const luaScript = `
+      if redis.call('exists', KEYS[2]) == 1 then
+        return -2 
+      end
+
       local stock = tonumber(redis.call('get', KEYS[1]))
       if not stock then return -1 end
+      
       if stock >= tonumber(ARGV[1]) then
         redis.call('decrby', KEYS[1], ARGV[1])
+        redis.call('set', KEYS[2], ARGV[2], 'EX', ARGV[3])
         return 1
       else
         return 0
       end
     `;
+    const result = await this.redis.eval(
+      luaScript,
+      2,
+      stockKey,
+      reservationKey,
+      quantity,
+      reservationJson,
+      ttl,
+    );
 
-    const result = await this.redis.eval(luaScript, 1, stockKey, quantity);
+    if (result === -2) {
+      throw new BadRequestException(
+        'Bạn đang có vé đang giữ. Vui lòng thanh toán.',
+      );
+    }
 
     if (result === -1) {
       await this.syncStockToRedis();
@@ -80,22 +101,6 @@ export class BookingsService implements OnModuleInit {
     if (result === 0) {
       throw new BadRequestException('Vé đã hết hoặc không đủ số lượng.');
     }
-
-    const reservationData = {
-      ticketTypeId,
-      userId,
-      quantity,
-      timestamp: Date.now(),
-    };
-
-    const ttl = 600;
-    await this.redis.set(
-      reservationKey,
-      JSON.stringify(reservationData),
-      'EX',
-      ttl,
-    );
-
     try {
       await this.bookingQueue.add(
         'release-ticket',
@@ -112,7 +117,6 @@ export class BookingsService implements OnModuleInit {
       );
     } catch (error) {
       this.logger.error(`Failed to add release-ticket job: ${error.message}`);
-      // Rollback: Xóa reservation và hoàn trả vé vào kho
       await this.redis.del(reservationKey);
       await this.redis.incrby(stockKey, quantity);
       throw new BadRequestException(
