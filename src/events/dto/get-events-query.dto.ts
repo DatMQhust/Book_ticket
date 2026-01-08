@@ -1,4 +1,12 @@
-import { IsOptional, IsEnum, IsInt, Min, Max, IsString } from 'class-validator';
+import {
+  IsOptional,
+  IsEnum,
+  IsInt,
+  Min,
+  Max,
+  IsString,
+  IsDateString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { EventType, EventStatus } from '../entities/event.entity';
 
@@ -12,6 +20,11 @@ export enum SortBy {
 export enum Order {
   ASC = 'ASC',
   DESC = 'DESC',
+}
+export enum featured {
+  mostPopular = 'mostPopular',
+  lowestPrice = 'lowestPrice',
+  highestPrice = 'highestPrice',
 }
 
 export class GetEventsQueryDto {
@@ -51,4 +64,21 @@ export class GetEventsQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @IsOptional()
+  featured?: featured;
+
+  @IsOptional()
+  priceFrom?: number;
+
+  @IsOptional()
+  priceTo?: number;
 }
