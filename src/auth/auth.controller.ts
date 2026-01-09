@@ -41,6 +41,13 @@ export class AuthController {
     return await this.authService.logout(req.user, res);
   }
 
+  @Get('me')
+  async getMe(@Req() req) {
+    return {
+      user: req.user,
+    };
+  }
+
   @Public()
   @Get('google/login')
   @UseGuards(GoogleAuthGuard)
@@ -49,14 +56,16 @@ export class AuthController {
   @Public()
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  async googleCallback(@Req() req, @Res({ passthrough: true }) res: Response) {
+  async googleCallback(@Req() req, @Res() res: Response) {
     const user = req.user;
     if (user) {
-      await this.authService.login(user, res);
+      const tokens = await this.authService.login(user, res);
+      const frontendUrl = this.configService.get<string>('FRONTEND_URL');
       return res.redirect(
-        `${this.configService.get<string>('FRONTEND_URL')}/home`,
+        `${frontendUrl}/auth/callback?access_token=${tokens.accessToken}&refresh_token=${tokens.refreshToken}`,
       );
     }
-    return res.status(401).json({ message: 'Unauthorized' });
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    return res.redirect(`${frontendUrl}/login?error=unauthorized`);
   }
 }

@@ -117,7 +117,8 @@ export class AuthService {
     });
     return {
       user: { id, name, phone, email, role, isActive },
-      access_token: accessToken,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
     };
   }
 
