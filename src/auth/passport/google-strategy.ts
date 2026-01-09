@@ -28,8 +28,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
     const userDto = {
       email: emails[0].value,
       name: displayName,
-      phone: '',
-      password: '',
+      phone: null,
+      password: null,
     };
     const user = await this.userService.validateGoogleUser(userDto);
     done(null, user);

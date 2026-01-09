@@ -29,12 +29,12 @@ export class UserEntity {
   @Index({ unique: true })
   email: string;
 
-  @Column({ type: 'varchar', length: 11 })
-  @Index({ unique: true })
-  phone: string;
+  @Column({ type: 'varchar', length: 11, nullable: true })
+  @Index({ unique: true, where: 'phone IS NOT NULL' })
+  phone: string | null;
 
-  @Column({ type: 'varchar', length: 255, select: false })
-  password: string;
+  @Column({ type: 'varchar', length: 255, select: false, nullable: true })
+  password: string | null;
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;
