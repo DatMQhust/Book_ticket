@@ -49,12 +49,14 @@ export class UsersService {
     if (existed) {
       throw new Error('Email already exists');
     }
-    const hashedPassword = this.hashPassword(createUserDto.password);
+    const hashedPassword = createUserDto.password
+      ? this.hashPassword(createUserDto.password)
+      : null;
 
     const newUser = this.userRepository.create({
       name: createUserDto.name,
       email: createUserDto.email,
-      phone: createUserDto.phone,
+      phone: createUserDto.phone || null,
       password: hashedPassword,
       role: createUserDto.role ?? UserRole.USER,
       isActive: true,
