@@ -19,6 +19,10 @@ import { CreateEventDto } from './dto/create-event.dto';
 import { GetEventsQueryDto } from './dto/get-events-query.dto';
 import { Throttle } from '@nestjs/throttler';
 import { AddTicketTypeToEventDto } from './dto/add-ticket-type.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+
+@ApiTags('events')
+@ApiBearerAuth()
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventService: EventsService) {}

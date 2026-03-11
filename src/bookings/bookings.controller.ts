@@ -1,9 +1,12 @@
 import { Controller, Post, Body, Request, Headers } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { BookingsService } from './bookings.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { Public } from 'src/auth/decorators/auth.decorator';
 import { ConfigService } from '@nestjs/config';
 
+@ApiTags('bookings')
+@ApiBearerAuth()
 @Controller('bookings')
 export class BookingsController {
   constructor(

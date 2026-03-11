@@ -1,4 +1,5 @@
 import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TicketTypeEntity } from './entities/ticket-type.entity';
@@ -7,6 +8,8 @@ import { CreateTicketTypeDto } from './dto/create-ticket-type.dto';
 import { Roles } from 'src/auth/decorators/auth.decorator';
 import { UserRole } from 'src/users/entities/user.entity';
 
+@ApiTags('ticket-types')
+@ApiBearerAuth()
 @Controller('ticket-types')
 export class TicketTypeController {
   constructor(

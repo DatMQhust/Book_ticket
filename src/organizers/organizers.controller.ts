@@ -13,7 +13,10 @@ import { OrganizersService } from './organizers.service';
 import { CreateOrganizerDto } from './dto/create-organizer.dto';
 import { UpdateOrganizerDto } from './dto/update-organizer.dto';
 import { UpdateEventDto } from '../events/dto/update-event.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('organizers')
+@ApiBearerAuth()
 @Controller('organizers')
 export class OrganizersController {
   constructor(private readonly organizersService: OrganizersService) {}

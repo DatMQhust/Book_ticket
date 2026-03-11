@@ -17,7 +17,10 @@ import { Roles } from '../auth/decorators/auth.decorator';
 import { UserRole } from '../users/entities/user.entity';
 import { UpdateSepayConfigDto } from './dto/update-sepay-config.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('admin')
+@ApiBearerAuth()
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)

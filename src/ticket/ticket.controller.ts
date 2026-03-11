@@ -12,7 +12,10 @@ import { User } from '../auth/decorators/auth.decorator';
 import { CheckInTicketDto } from './dto/check-in-ticket.dto';
 import { TicketCheckInGuard } from '../auth/guards/ticket-check-in.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('tickets')
+@ApiBearerAuth()
 @Controller('ticket')
 export class TicketController {
   constructor(private readonly ticketService: TicketService) {}

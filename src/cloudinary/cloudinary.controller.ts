@@ -18,11 +18,14 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { Express } from 'express';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 // Kích thước file (tính bằng byte)
 const TEN_MB = 10 * 1024 * 1024;
 const HUNDRED_MB = 100 * 1024 * 1024;
 
+@ApiTags('upload')
+@ApiBearerAuth()
 @Controller('upload')
 export class UploadController {
   constructor(private readonly cloudinaryService: CloudinaryService) {}
