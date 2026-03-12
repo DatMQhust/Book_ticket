@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sự kiện bị huỷ</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0f0f0f; font-family: 'Segoe UI', Arial, sans-serif; color: #e5e5e5; }
+    .wrapper { max-width: 600px; margin: 40px auto; background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #2a2a2a; }
+    .header { background: #27272a; padding: 32px 40px; text-align: center; border-bottom: 3px solid #ef4444; }
+    .header h1 { margin: 0; color: #fff; font-size: 24px; font-weight: 700; }
+    .header p { margin: 6px 0 0; color: #f87171; font-size: 14px; font-weight: 600; }
+    .body { padding: 36px 40px; }
+    .body p { line-height: 1.7; color: #d4d4d4; font-size: 15px; margin: 0 0 16px; }
+    .cancel-box { background: #1c0a0a; border: 1px solid #7f1d1d; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
+    .cancel-box p { margin: 0; color: #fca5a5; font-size: 14px; }
+    .refund-box { background: #facc1510; border-left: 4px solid #facc15; border-radius: 6px; padding: 14px 18px; margin: 20px 0; }
+    .refund-box p { margin: 0; color: #fef08a; font-size: 14px; }
+    .footer { text-align: center; padding: 24px 40px; border-top: 1px solid #2a2a2a; }
+    .footer p { margin: 0; font-size: 12px; color: #525252; }
+    .footer a { color: #facc15; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>🏢 HighShow</h1>
+      <p>❌ Thông báo huỷ sự kiện</p>
+    </div>
+    <div class="body">
+      <p>Xin chào <strong>{{userName}}</strong>,</p>
+      <p>Chúng tôi rất tiếc phải thông báo rằng sự kiện <strong>{{eventName}}</strong> dự kiến diễn ra vào <strong>{{eventDate}}</strong> đã bị huỷ.</p>
+      {{#if reason}}
+      <div class="cancel-box">
+        <p><strong>Lý do:</strong> {{reason}}</p>
+      </div>
+      {{/if}}
+      <div class="refund-box">
+        <p>💰 Bạn sẽ được <strong>hoàn tiền 100%</strong> về phương thức thanh toán gốc trong vòng <strong>3–7 ngày làm việc</strong>.</p>
+      </div>
+      <p>Chúng tôi thành thật xin lỗi vì sự bất tiện này. Nếu có thắc mắc, vui lòng liên hệ: <a href="mailto:{{supportEmail}}" style="color:#facc15;">{{supportEmail}}</a></p>
+      <p>Trân trọng,<br/><strong>Đội ngũ HighShow</strong></p>
+    </div>
+    <div class="footer">
+      <p>© {{year}} HighShow. Không reply email này — đây là email tự động.</p>
+    </div>
+  </div>
+</body>
+</html>

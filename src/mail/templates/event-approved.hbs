@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sự kiện được phê duyệt</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0f0f0f; font-family: 'Segoe UI', Arial, sans-serif; color: #e5e5e5; }
+    .wrapper { max-width: 600px; margin: 40px auto; background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #2a2a2a; }
+    .header { background: linear-gradient(135deg, #facc15 0%, #f59e0b 100%); padding: 32px 40px; text-align: center; }
+    .header h1 { margin: 0; color: #000; font-size: 24px; font-weight: 700; }
+    .body { padding: 36px 40px; }
+    .body p { line-height: 1.7; color: #d4d4d4; font-size: 15px; margin: 0 0 16px; }
+    .info-box { background: #111; border: 1px solid #3f3f46; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
+    .info-row { display: flex; justify-content: space-between; padding: 6px 0; }
+    .info-label { color: #71717a; font-size: 13px; }
+    .info-value { color: #e5e5e5; font-size: 13px; font-weight: 600; }
+    .btn { display: inline-block; margin-top: 4px; padding: 12px 28px; background: #facc15; color: #000; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; }
+    .footer { text-align: center; padding: 24px 40px; border-top: 1px solid #2a2a2a; }
+    .footer p { margin: 0; font-size: 12px; color: #525252; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>🏢 HighShow</h1>
+    </div>
+    <div class="body">
+      <p>Xin chào <strong>{{organizerName}}</strong>,</p>
+      <p>✅ Sự kiện của bạn đã được <strong>phê duyệt</strong> và sẽ được hiển thị công khai trên nền tảng HighShow theo lịch đã cấu hình.</p>
+      <div class="info-box">
+        <div class="info-row">
+          <span class="info-label">Tên sự kiện</span>
+          <span class="info-value">{{eventName}}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Phí sàn</span>
+          <span class="info-value">{{platformFeePercent}}% doanh thu sau hoàn vé</span>
+        </div>
+      </div>
+      <p style="text-align:center;">
+        <a href="{{eventUrl}}" class="btn">Xem sự kiện →</a>
+      </p>
+      <p style="font-size:13px; color:#71717a; margin-top: 16px;">Lưu ý: Thông tin cốt lõi (giá vé, số lượng, ngày) không thể chỉnh sửa sau khi sự kiện đã được phê duyệt. Mọi thay đổi cần gửi yêu cầu cho Admin.</p>
+      <p>Trân trọng,<br/><strong>Đội ngũ HighShow</strong></p>
+    </div>
+    <div class="footer">
+      <p>© {{year}} HighShow. Không reply email này — đây là email tự động.</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Đã nhận hồ sơ đăng ký Organizer</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0f0f0f; font-family: 'Segoe UI', Arial, sans-serif; color: #e5e5e5; }
+    .wrapper { max-width: 600px; margin: 40px auto; background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #2a2a2a; }
+    .header { background: linear-gradient(135deg, #facc15 0%, #f59e0b 100%); padding: 32px 40px; text-align: center; }
+    .header h1 { margin: 0; color: #000; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+    .header p { margin: 6px 0 0; color: #78350f; font-size: 14px; }
+    .body { padding: 36px 40px; }
+    .body p { line-height: 1.7; color: #d4d4d4; font-size: 15px; margin: 0 0 16px; }
+    .highlight-box { background: #facc1510; border-left: 4px solid #facc15; border-radius: 6px; padding: 16px 20px; margin: 24px 0; }
+    .highlight-box p { margin: 0; color: #fef08a; font-size: 14px; }
+    .steps { background: #111; border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .steps p { margin: 0 0 8px; font-size: 14px; color: #a3a3a3; }
+    .steps ul { margin: 0; padding-left: 20px; }
+    .steps ul li { margin: 6px 0; font-size: 14px; color: #d4d4d4; }
+    .footer { text-align: center; padding: 24px 40px; border-top: 1px solid #2a2a2a; }
+    .footer p { margin: 0; font-size: 12px; color: #525252; }
+    .footer a { color: #facc15; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>🏢 HighShow</h1>
+      <p>Nền tảng đặt vé sự kiện</p>
+    </div>
+    <div class="body">
+      <p>Xin chào <strong>{{organizerName}}</strong>,</p>
+      <p>Chúng tôi đã nhận được hồ sơ đăng ký Organizer của bạn. Đội ngũ xét duyệt của HighShow sẽ xem xét thông tin và phản hồi trong thời gian sớm nhất.</p>
+      <div class="highlight-box">
+        <p>⏱️ Thời gian xét duyệt: <strong>{{slaText}}</strong> kể từ ngày nộp hồ sơ.</p>
+      </div>
+      <div class="steps">
+        <p>Trong thời gian chờ, bạn có thể chuẩn bị:</p>
+        <ul>
+          <li>Thông tin chi tiết về sự kiện dự kiến tổ chức</li>
+          <li>Banner và hình ảnh sự kiện (tỷ lệ 16:9, tối thiểu 1280x720px)</li>
+          <li>Tài liệu pháp lý liên quan (nếu là sự kiện vừa/lớn)</li>
+        </ul>
+      </div>
+      <p>Nếu cần hỗ trợ, hãy liên hệ chúng tôi qua email: <a href="mailto:{{supportEmail}}" style="color:#facc15;">{{supportEmail}}</a></p>
+      <p>Trân trọng,<br/><strong>Đội ngũ HighShow</strong></p>
+    </div>
+    <div class="footer">
+      <p>© {{year}} HighShow. Không reply email này — đây là email tự động.</p>
+    </div>
+  </div>
+</body>
+</html>

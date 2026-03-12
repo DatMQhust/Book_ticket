@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Xác nhận hoàn tiền</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0f0f0f; font-family: 'Segoe UI', Arial, sans-serif; color: #e5e5e5; }
+    .wrapper { max-width: 600px; margin: 40px auto; background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #2a2a2a; }
+    .header { background: linear-gradient(135deg, #facc15 0%, #f59e0b 100%); padding: 32px 40px; text-align: center; }
+    .header h1 { margin: 0; color: #000; font-size: 24px; font-weight: 700; }
+    .header p { margin: 6px 0 0; color: #78350f; font-size: 14px; font-weight: 600; }
+    .body { padding: 36px 40px; }
+    .body p { line-height: 1.7; color: #d4d4d4; font-size: 15px; margin: 0 0 16px; }
+    .amount-box { background: #111; border: 1px solid #3f3f46; border-radius: 10px; padding: 24px; text-align: center; margin: 20px 0; }
+    .amount-box p { margin: 0 0 4px; color: #71717a; font-size: 13px; }
+    .amount-box span { font-size: 32px; font-weight: 700; color: #4ade80; }
+    .note-box { background: #facc1510; border-left: 4px solid #facc15; border-radius: 6px; padding: 14px 18px; margin: 20px 0; }
+    .note-box p { margin: 0; color: #fef08a; font-size: 14px; }
+    .footer { text-align: center; padding: 24px 40px; border-top: 1px solid #2a2a2a; }
+    .footer p { margin: 0; font-size: 12px; color: #525252; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>🏢 HighShow</h1>
+      <p>✅ Xác nhận hoàn tiền thành công</p>
+    </div>
+    <div class="body">
+      <p>Xin chào <strong>{{userName}}</strong>,</p>
+      <p>Yêu cầu hoàn tiền cho vé sự kiện <strong>{{eventName}}</strong> đã được xử lý thành công.</p>
+      <div class="amount-box">
+        <p>Số tiền hoàn trả</p>
+        <span>{{amountFormatted}}</span>
+      </div>
+      <div class="note-box">
+        <p>⏱️ Thời gian nhận tiền: <strong>{{estimatedDays}} ngày làm việc</strong> kể từ hôm nay, tuỳ thuộc ngân hàng của bạn.</p>
+      </div>
+      <p>Tiền sẽ được hoàn về phương thức thanh toán gốc mà bạn đã sử dụng.</p>
+      <p>Trân trọng,<br/><strong>Đội ngũ HighShow</strong></p>
+    </div>
+    <div class="footer">
+      <p>© {{year}} HighShow. Không reply email này — đây là email tự động.</p>
+    </div>
+  </div>
+</body>
+</html>

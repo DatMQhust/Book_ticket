@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hồ sơ Organizer cần bổ sung</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0f0f0f; font-family: 'Segoe UI', Arial, sans-serif; color: #e5e5e5; }
+    .wrapper { max-width: 600px; margin: 40px auto; background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #2a2a2a; }
+    .header { background: #27272a; padding: 32px 40px; text-align: center; border-bottom: 3px solid #f97316; }
+    .header h1 { margin: 0; color: #fff; font-size: 24px; font-weight: 700; }
+    .header p { margin: 6px 0 0; color: #f97316; font-size: 14px; font-weight: 600; }
+    .body { padding: 36px 40px; }
+    .body p { line-height: 1.7; color: #d4d4d4; font-size: 15px; margin: 0 0 16px; }
+    .reason-box { background: #1c0f0a; border: 1px solid #9a3412; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
+    .reason-box p { margin: 0; color: #fdba74; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+    .deadline-box { background: #facc1510; border-left: 4px solid #facc15; border-radius: 6px; padding: 14px 18px; margin: 20px 0; }
+    .deadline-box p { margin: 0; color: #fef08a; font-size: 14px; }
+    .btn { display: inline-block; margin-top: 8px; padding: 12px 28px; background: #facc15; color: #000; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; }
+    .footer { text-align: center; padding: 24px 40px; border-top: 1px solid #2a2a2a; }
+    .footer p { margin: 0; font-size: 12px; color: #525252; }
+    .footer a { color: #facc15; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>🏢 HighShow</h1>
+      <p>⚠️ Hồ sơ cần bổ sung thông tin</p>
+    </div>
+    <div class="body">
+      <p>Xin chào <strong>{{organizerName}}</strong>,</p>
+      <p>Cảm ơn bạn đã nộp hồ sơ đăng ký Organizer. Sau khi xem xét, đội ngũ của chúng tôi cần bạn bổ sung một số thông tin sau:</p>
+      <div class="reason-box">
+        <p>{{reason}}</p>
+      </div>
+      <div class="deadline-box">
+        <p>⏰ Bạn có <strong>{{resubmitDeadlineDays}} ngày</strong> kể từ email này để cập nhật và nộp lại. Quá thời hạn, hồ sơ sẽ tự động bị huỷ.</p>
+      </div>
+      <a href="{{resubmitUrl}}" class="btn">Cập nhật và nộp lại hồ sơ</a>
+      <p style="margin-top: 24px;">Nếu cần hỗ trợ, vui lòng liên hệ: <a href="mailto:{{supportEmail}}" style="color:#facc15;">{{supportEmail}}</a></p>
+      <p>Trân trọng,<br/><strong>Đội ngũ HighShow</strong></p>
+    </div>
+    <div class="footer">
+      <p>© {{year}} HighShow. Không reply email này — đây là email tự động.</p>
+    </div>
+  </div>
+</body>
+</html>
