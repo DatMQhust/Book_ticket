@@ -13,10 +13,11 @@ import {
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/role.guard';
-import { Roles } from '../auth/decorators/auth.decorator';
+import { Roles, User } from '../auth/decorators/auth.decorator';
 import { UserRole } from '../users/entities/user.entity';
 import { UpdateSepayConfigDto } from './dto/update-sepay-config.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { ReviewKycDto } from './dto/review-kyc.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('admin')
@@ -39,8 +40,27 @@ export class AdminController {
   async getAllOrganizers(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
+    @Query('status') status?: string,
   ) {
-    return this.adminService.getAllOrganizers(parseInt(page), parseInt(limit));
+    return this.adminService.getAllOrganizers(
+      parseInt(page),
+      parseInt(limit),
+      status,
+    );
+  }
+
+  @Patch('organizers/:id/kyc')
+  @HttpCode(HttpStatus.OK)
+  async reviewKycApplication(
+    @User() user: any,
+    @Param('id') organizerId: string,
+    @Body() reviewKycDto: ReviewKycDto,
+  ) {
+    return this.adminService.reviewKycApplication(
+      user.id,
+      organizerId,
+      reviewKycDto,
+    );
   }
 
   @Get('events')

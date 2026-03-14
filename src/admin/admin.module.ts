@@ -7,6 +7,7 @@ import { OrganizerEntity } from '../organizers/entities/organizer.entity';
 import { EventEntity } from '../events/entities/event.entity';
 import { OrderEntity } from '../order/entities/order.entity';
 import { OrganizationPaymentConfigEntity } from '../organizers/entities/payment-config.entity';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { OrganizationPaymentConfigEntity } from '../organizers/entities/payment-
       OrderEntity,
       OrganizationPaymentConfigEntity,
     ]),
+    MailModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

@@ -8,11 +8,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { UserEntity, UserRole } from '../users/entities/user.entity';
 import { CreateOrganizerDto } from './dto/create-organizer.dto';
+import { SubmitKycDto } from './dto/submit-kyc.dto';
 import { OrganizerEntity } from './entities/organizer.entity';
+import { KycStatus } from './enums/organizer.enum';
 import { EventEntity } from '../events/entities/event.entity';
 import { UpdateEventDto } from '../events/dto/update-event.dto';
 import { EventSessionEntity } from '../event-session/entities/event-session.entity';
 import { TicketTypeEntity } from '../ticket-type/entities/ticket-type.entity';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class OrganizersService {
@@ -28,8 +31,84 @@ export class OrganizersService {
     private readonly eventSessionRepository: Repository<EventSessionEntity>,
     @InjectRepository(TicketTypeEntity)
     private readonly ticketTypeRepository: Repository<TicketTypeEntity>,
+    private readonly mailService: MailService,
   ) {}
 
+  async submitKyc(
+    userId: string,
+    submitKycDto: SubmitKycDto,
+  ): Promise<OrganizerEntity> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['organizer'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User với ID "${userId}" không tồn tại.`);
+    }
+
+    if (user.role === UserRole.ORGANIZER) {
+      throw new BadRequestException('User này đã là một organizer.');
+    }
+
+    if (user.organizer) {
+      if (user.organizer.kycStatus === KycStatus.PENDING) {
+        throw new BadRequestException('Hồ sơ KYC của bạn đang được xét duyệt.');
+      }
+      if (user.organizer.kycStatus === KycStatus.APPROVED) {
+        throw new BadRequestException('Hồ sơ KYC của bạn đã được duyệt.');
+      }
+    }
+
+    // Nếu chưa có, tạo mới
+    const organizer =
+      user.organizer || this.organizersRepository.create({ user });
+
+    // Cập nhật thông tin
+    organizer.name = submitKycDto.name;
+    organizer.description = submitKycDto.description || '';
+    organizer.organizerType = submitKycDto.organizerType;
+    organizer.taxCode = submitKycDto.taxCode;
+    organizer.phone = submitKycDto.phone;
+    organizer.website = submitKycDto.website;
+    organizer.bankName = submitKycDto.bankName;
+    organizer.bankAccount = submitKycDto.bankAccount;
+    organizer.bankAccountHolder = submitKycDto.bankAccountHolder;
+    organizer.documents = submitKycDto.documents;
+    organizer.kycStatus = KycStatus.PENDING;
+    organizer.kycSubmittedAt = new Date();
+    organizer.kycRejectedReason = null; // reset if resubmitting
+
+    const savedOrganizer = await this.organizersRepository.save(organizer);
+
+    // Gửi email
+    try {
+      await this.mailService.sendKycSubmitted({
+        to: submitKycDto.contactEmail || user.email,
+        organizerName: organizer.name,
+      });
+    } catch (error) {
+      console.error('Error sending KYC submitted email', error);
+      // Not failing the process if email fails
+    }
+
+    return savedOrganizer;
+  }
+
+  async getMyProfile(userId: string): Promise<OrganizerEntity> {
+    const organizer = await this.organizersRepository.findOne({
+      where: { user: { id: userId } },
+    });
+
+    if (!organizer) {
+      throw new NotFoundException(
+        'Không tìm thấy profile organizer cho user này',
+      );
+    }
+    return organizer;
+  }
+
+  // (Kept for backward compatibility if needed, but not used by user anymore)
   async createAndAssignRole(
     createOrganizerDto: CreateOrganizerDto,
   ): Promise<OrganizerEntity> {
@@ -82,7 +161,7 @@ export class OrganizersService {
       where: { id },
     });
     if (!organizer) {
-      throw new NotFoundException(`Organizer with ID "${id}" not found.`);
+      throw new NotFoundException(`Không tìm thấy Organizer với ID "${id}".`);
     }
     return organizer;
   }
@@ -113,7 +192,7 @@ export class OrganizersService {
       });
 
       if (!organizer) {
-        throw new NotFoundException(`Organizer with ID "${id}" not found.`);
+        throw new NotFoundException(`Không tìm thấy Organizer với ID "${id}".`);
       }
 
       const user = organizer.user;
@@ -155,13 +234,11 @@ export class OrganizersService {
     });
 
     if (!event) {
-      throw new NotFoundException(`Event with ID "${eventId}" not found.`);
+      throw new NotFoundException(`Không tìm thấy Event với ID "${eventId}".`);
     }
 
     if (event.organizer.id !== organizerId) {
-      throw new ForbiddenException(
-        'You do not have permission to access this event.',
-      );
+      throw new ForbiddenException('Bạn không có quyền truy cập event này.');
     }
 
     return event;

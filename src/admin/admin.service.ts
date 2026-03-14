@@ -1,13 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserEntity } from '../users/entities/user.entity';
+import { UserEntity, UserRole } from '../users/entities/user.entity';
 import { OrganizerEntity } from '../organizers/entities/organizer.entity';
+import { KycStatus } from '../organizers/enums/organizer.enum';
 import { EventEntity } from '../events/entities/event.entity';
 import { OrderEntity, OrderStatus } from '../order/entities/order.entity';
 import { OrganizationPaymentConfigEntity } from '../organizers/entities/payment-config.entity';
 import { UpdateSepayConfigDto } from './dto/update-sepay-config.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { ReviewKycDto } from './dto/review-kyc.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AdminService {
@@ -22,6 +25,7 @@ export class AdminService {
     private readonly orderRepository: Repository<OrderEntity>,
     @InjectRepository(OrganizationPaymentConfigEntity)
     private readonly paymentConfigRepository: Repository<OrganizationPaymentConfigEntity>,
+    private readonly mailService: MailService,
   ) {}
 
   async getAllUsers(page: number = 1, limit: number = 10) {
@@ -53,9 +57,20 @@ export class AdminService {
     };
   }
 
-  async getAllOrganizers(page: number = 1, limit: number = 10) {
+  async getAllOrganizers(
+    page: number = 1,
+    limit: number = 10,
+    status?: string,
+  ) {
     const skip = (page - 1) * limit;
+
+    let whereClause = {};
+    if (status) {
+      whereClause = { kycStatus: status };
+    }
+
     const [organizers, total] = await this.organizerRepository.findAndCount({
+      where: whereClause,
       skip,
       take: limit,
       relations: ['user', 'events'],
@@ -97,7 +112,7 @@ export class AdminService {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+      throw new NotFoundException(`Không tìm thấy User với ID ${userId}`);
     }
 
     user.isActive = updateDto.isActive;
@@ -146,7 +161,7 @@ export class AdminService {
     await this.paymentConfigRepository.save(paymentConfig);
 
     return {
-      message: 'Sepay configuration updated successfully',
+      message: 'Cập nhật cấu hình thanh toán Sepay thành công',
       config: paymentConfig,
     };
   }
@@ -162,7 +177,9 @@ export class AdminService {
     });
 
     if (!organizer) {
-      throw new NotFoundException(`Organizer with ID ${organizerId} not found`);
+      throw new NotFoundException(
+        `Không tìm thấy Organizer với ID ${organizerId}`,
+      );
     }
 
     const eventIds = organizer.events.map((event) => event.id);
@@ -283,10 +300,78 @@ export class AdminService {
 
     if (!config) {
       throw new NotFoundException(
-        `Payment config for organizer ${organizerId} not found`,
+        `Không tìm thấy cấu hình thanh toán của organizer ${organizerId}`,
       );
     }
 
     return config;
+  }
+
+  async reviewKycApplication(
+    adminId: string,
+    organizerId: string,
+    reviewDto: ReviewKycDto,
+  ) {
+    const organizer = await this.organizerRepository.findOne({
+      where: { id: organizerId },
+      relations: ['user'],
+    });
+
+    if (!organizer) {
+      throw new NotFoundException(
+        `Không tìm thấy Organizer với ID ${organizerId}`,
+      );
+    }
+
+    const { decision, rejectedReason } = reviewDto;
+
+    if (
+      (decision === KycStatus.REJECTED ||
+        decision === KycStatus.NEEDS_REVISION) &&
+      !rejectedReason
+    ) {
+      throw new Error(
+        `Vui lòng cung cấp lý do (rejectedReason) khi quyết định là ${decision}`,
+      );
+    }
+
+    organizer.kycStatus = decision;
+    organizer.kycReviewedAt = new Date();
+    organizer.kycReviewedByAdminId = adminId;
+    if (
+      decision === KycStatus.REJECTED ||
+      decision === KycStatus.NEEDS_REVISION
+    ) {
+      organizer.kycRejectedReason = rejectedReason;
+    } else {
+      organizer.kycRejectedReason = null;
+    }
+
+    await this.organizerRepository.save(organizer);
+
+    // Update user role if approved
+    if (decision === KycStatus.APPROVED) {
+      if (organizer.user) {
+        organizer.user.role = UserRole.ORGANIZER;
+        await this.userRepository.save(organizer.user);
+      }
+
+      await this.mailService.sendKycApproved({
+        to: organizer.user.email,
+        organizerName: organizer.name,
+      });
+    } else if (
+      decision === KycStatus.REJECTED ||
+      decision === KycStatus.NEEDS_REVISION
+    ) {
+      await this.mailService.sendKycRejected({
+        to: organizer.user.email,
+        organizerName: organizer.name,
+        reason: rejectedReason,
+        resubmitDeadlineDays: 7,
+      });
+    }
+
+    return organizer;
   }
 }

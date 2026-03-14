@@ -8,12 +8,16 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { OrganizersService } from './organizers.service';
 import { CreateOrganizerDto } from './dto/create-organizer.dto';
+import { SubmitKycDto } from './dto/submit-kyc.dto';
 import { UpdateOrganizerDto } from './dto/update-organizer.dto';
 import { UpdateEventDto } from '../events/dto/update-event.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { User } from '../auth/decorators/auth.decorator';
 
 @ApiTags('organizers')
 @ApiBearerAuth()
@@ -21,6 +25,19 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 export class OrganizersController {
   constructor(private readonly organizersService: OrganizersService) {}
 
+  @UseGuards(JwtAuthGuard)
+  @Post('submit-kyc')
+  submitKyc(@User() user: any, @Body() submitKycDto: SubmitKycDto) {
+    return this.organizersService.submitKyc(user.id, submitKycDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('my-profile')
+  getMyProfile(@User() user: any) {
+    return this.organizersService.getMyProfile(user.id);
+  }
+
+  // Legacy create endpoint - might be used by admin so we keep it but it should probably map to internal creation.
   @Post()
   create(@Body() createOrganizerDto: CreateOrganizerDto) {
     return this.organizersService.createAndAssignRole(createOrganizerDto);
