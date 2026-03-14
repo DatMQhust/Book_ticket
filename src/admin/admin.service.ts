@@ -1,15 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity, UserRole } from '../users/entities/user.entity';
 import { OrganizerEntity } from '../organizers/entities/organizer.entity';
 import { KycStatus } from '../organizers/enums/organizer.enum';
-import { EventEntity } from '../events/entities/event.entity';
+import { EventEntity, EventStatus } from '../events/entities/event.entity';
 import { OrderEntity, OrderStatus } from '../order/entities/order.entity';
 import { OrganizationPaymentConfigEntity } from '../organizers/entities/payment-config.entity';
 import { UpdateSepayConfigDto } from './dto/update-sepay-config.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { ReviewKycDto } from './dto/review-kyc.dto';
+import { ReviewEventDecision, ReviewEventDto } from './dto/review-event.dto';
 import { MailService } from '../mail/mail.service';
 
 @Injectable()
@@ -88,9 +93,12 @@ export class AdminService {
     };
   }
 
-  async getAllEvents(page: number = 1, limit: number = 10) {
+  async getAllEvents(page: number = 1, limit: number = 10, status?: string) {
     const skip = (page - 1) * limit;
+    const where = status ? { status: status as EventStatus } : {};
+
     const [events, total] = await this.eventRepository.findAndCount({
+      where,
       skip,
       take: limit,
       relations: ['organizer', 'organizer.user'],
@@ -106,6 +114,93 @@ export class AdminService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async getEventDetail(eventId: string): Promise<EventEntity> {
+    const event = await this.eventRepository.findOne({
+      where: { id: eventId },
+      relations: [
+        'organizer',
+        'organizer.user',
+        'sessions',
+        'sessions.ticketTypes',
+        'ticketTypes',
+      ],
+    });
+
+    if (!event) {
+      throw new NotFoundException(`Event with ID ${eventId} not found`);
+    }
+
+    return event;
+  }
+
+  async reviewEvent(
+    eventId: string,
+    adminId: string,
+    dto: ReviewEventDto,
+  ): Promise<EventEntity> {
+    const event = await this.eventRepository.findOne({
+      where: { id: eventId },
+      relations: ['organizer', 'organizer.user'],
+    });
+
+    if (!event) {
+      throw new NotFoundException(`Event with ID ${eventId} not found`);
+    }
+
+    if (event.status !== EventStatus.PENDING_REVIEW) {
+      throw new BadRequestException(
+        'Only PENDING_REVIEW events can be reviewed',
+      );
+    }
+
+    const { decision, adminNotes, feePercentage } = dto;
+    event.reviewedAt = new Date();
+
+    if (decision === ReviewEventDecision.APPROVED) {
+      event.status = EventStatus.UPCOMING;
+      event.feePercentage = feePercentage;
+      event.adminNotes = null;
+      await this.eventRepository.save(event);
+
+      await this.mailService.sendEventApproved({
+        to: event.organizer.user.email,
+        organizerName: event.organizer.name,
+        eventName: event.name,
+        eventUrl: `${process.env.CLIENT_URL}/events/${event.id}`,
+        platformFeePercent: feePercentage,
+      });
+    } else if (decision === ReviewEventDecision.NEEDS_REVISION) {
+      event.status = EventStatus.NEEDS_REVISION;
+      event.adminNotes = adminNotes;
+      await this.eventRepository.save(event);
+
+      await this.mailService.sendEventNeedsRevision({
+        to: event.organizer.user.email,
+        organizerName: event.organizer.name,
+        eventName: event.name,
+        notes: adminNotes,
+        editUrl: `${process.env.CLIENT_URL}/organizer/events/${event.id}/edit`,
+      });
+    } else {
+      // REJECTED
+      event.status = EventStatus.REJECTED;
+      event.adminNotes = adminNotes;
+      await this.eventRepository.save(event);
+
+      await this.mailService.sendEventRejected({
+        to: event.organizer.user.email,
+        organizerName: event.organizer.name,
+        eventName: event.name,
+        reason: adminNotes,
+      });
+    }
+
+    // Suppress adminId lint warning — reserved for audit log
+    void adminId;
+
+    return event;
   }
 
   async updateUserStatus(userId: string, updateDto: UpdateUserStatusDto) {

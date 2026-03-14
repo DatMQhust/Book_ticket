@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, IsInt, Min, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsInt,
+  Min,
+  IsOptional,
+  IsDate,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateTicketTypeDto {
   @IsString()
@@ -25,4 +33,19 @@ export class CreateTicketTypeDto {
   @Min(0)
   @IsOptional()
   sold?: number;
+
+  @IsDate()
+  @Type(() => Date)
+  @IsOptional()
+  saleStartTime?: Date;
+
+  @IsDate()
+  @Type(() => Date)
+  @IsOptional()
+  saleEndTime?: Date;
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  maxPerTransaction?: number;
 }

@@ -7,14 +7,18 @@ import { EventSessionEntity } from 'src/event-session/entities/event-session.ent
 import { OrganizerEntity } from 'src/organizers/entities/organizer.entity';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { TicketTypeEntity } from 'src/ticket-type/entities/ticket-type.entity';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([EventEntity]),
-    TypeOrmModule.forFeature([EventSessionEntity]),
-    TypeOrmModule.forFeature([OrganizerEntity]),
-    TypeOrmModule.forFeature([TicketTypeEntity]),
+    TypeOrmModule.forFeature([
+      EventEntity,
+      EventSessionEntity,
+      OrganizerEntity,
+      TicketTypeEntity,
+    ]),
     CloudinaryModule,
+    MailModule,
   ],
   controllers: [EventsController],
   providers: [EventsService],

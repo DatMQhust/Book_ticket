@@ -49,6 +49,15 @@ export class TicketTypeEntity {
   @Column({ type: 'enum', enum: TicketStatus, default: TicketStatus.AVAILABLE })
   status: TicketStatus;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  saleStartTime: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  saleEndTime: Date;
+
+  @Column({ type: 'int', default: 4 })
+  maxPerTransaction: number;
+
   @ManyToOne(() => EventEntity, (event) => event.ticketTypes, {
     nullable: true,
   })

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EventEntity } from './entities/event.entity';
+import { EventEntity, EventStatus } from './entities/event.entity';
 import {
   Repository,
   DataSource,
@@ -19,8 +19,10 @@ import { GetEventsQueryDto } from './dto/get-events-query.dto';
 import { EventSessionEntity } from '../event-session/entities/event-session.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { CreateEventDto } from './dto/create-event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
 import { OrganizerEntity } from '../organizers/entities/organizer.entity';
 import { TicketTypeEntity } from '../ticket-type/entities/ticket-type.entity';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class EventsService {
@@ -34,9 +36,14 @@ export class EventsService {
     @InjectRepository(TicketTypeEntity)
     private readonly ticketTypeRepository: Repository<TicketTypeEntity>,
 
+    @InjectRepository(OrganizerEntity)
+    private readonly organizerRepository: Repository<OrganizerEntity>,
+
     private readonly dataSource: DataSource,
 
     private readonly cloudinaryService: CloudinaryService,
+
+    private readonly mailService: MailService,
   ) {}
 
   async createEvent(
@@ -371,7 +378,12 @@ export class EventsService {
   async getEventDetail(id: string): Promise<EventEntity> {
     const event = await this.eventRepository.findOne({
       where: { id },
-      relations: ['sessions', 'organizer', 'sessions.ticketTypes'],
+      relations: [
+        'sessions',
+        'organizer',
+        'sessions.ticketTypes',
+        'ticketTypes',
+      ],
       order: {
         sessions: {
           startTime: 'ASC',
@@ -387,5 +399,146 @@ export class EventsService {
     }
 
     return event;
+  }
+
+  // ─── Organizer event lifecycle ────────────────────────────────────────────
+
+  async getOrganizerEvents(userId: string): Promise<EventEntity[]> {
+    const organizer = await this.organizerRepository.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!organizer) {
+      throw new NotFoundException('Organizer profile not found');
+    }
+
+    return this.eventRepository.find({
+      where: { organizer: { id: organizer.id } },
+      relations: ['sessions'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async submitForReview(eventId: string, userId: string): Promise<EventEntity> {
+    const organizer = await this.organizerRepository.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!organizer) {
+      throw new NotFoundException('Organizer profile not found');
+    }
+
+    const event = await this.eventRepository.findOne({
+      where: { id: eventId, organizer: { id: organizer.id } },
+      relations: ['organizer', 'organizer.user'],
+    });
+    if (!event) {
+      throw new NotFoundException(
+        'Event not found or not owned by this organizer',
+      );
+    }
+
+    if (
+      event.status !== EventStatus.DRAFT &&
+      event.status !== EventStatus.NEEDS_REVISION
+    ) {
+      throw new BadRequestException(
+        'Only DRAFT or NEEDS_REVISION events can be submitted for review',
+      );
+    }
+
+    event.status = EventStatus.PENDING_REVIEW;
+    event.submittedAt = new Date();
+    const saved = await this.eventRepository.save(event);
+
+    await this.mailService.sendEventSubmitted({
+      to: event.organizer.user.email,
+      organizerName: event.organizer.name,
+      eventName: event.name,
+    });
+
+    return saved;
+  }
+
+  async updateEvent(
+    eventId: string,
+    userId: string,
+    dto: UpdateEventDto,
+    bannerImage?: Express.Multer.File,
+    mainImage?: Express.Multer.File,
+  ): Promise<EventEntity> {
+    const organizer = await this.organizerRepository.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!organizer) {
+      throw new NotFoundException('Organizer profile not found');
+    }
+
+    const event = await this.eventRepository.findOne({
+      where: { id: eventId, organizer: { id: organizer.id } },
+    });
+    if (!event) {
+      throw new NotFoundException(
+        'Event not found or not owned by this organizer',
+      );
+    }
+
+    if (
+      event.status !== EventStatus.DRAFT &&
+      event.status !== EventStatus.NEEDS_REVISION
+    ) {
+      throw new BadRequestException(
+        'Only DRAFT or NEEDS_REVISION events can be edited',
+      );
+    }
+
+    // Update scalar fields (exclude sessions/ticketTypes — managed separately)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { sessions, ticketTypes, ...scalarFields } = dto;
+    Object.assign(event, scalarFields);
+
+    if (bannerImage) {
+      const upload = await this.cloudinaryService.uploadImage(
+        bannerImage,
+        'events/banners',
+      );
+      event.bannerUrl = upload.secure_url;
+    }
+
+    if (mainImage) {
+      const upload = await this.cloudinaryService.uploadImage(
+        mainImage,
+        'events/images',
+      );
+      event.imageUrl = upload.secure_url;
+    }
+
+    return this.eventRepository.save(event);
+  }
+
+  async deleteEvent(
+    eventId: string,
+    userId: string,
+  ): Promise<{ message: string }> {
+    const organizer = await this.organizerRepository.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!organizer) {
+      throw new NotFoundException('Organizer profile not found');
+    }
+
+    const event = await this.eventRepository.findOne({
+      where: { id: eventId, organizer: { id: organizer.id } },
+    });
+    if (!event) {
+      throw new NotFoundException(
+        'Event not found or not owned by this organizer',
+      );
+    }
+
+    if (event.status !== EventStatus.DRAFT) {
+      throw new BadRequestException('Only DRAFT events can be deleted');
+    }
+
+    await this.eventRepository.softDelete(eventId);
+    return { message: 'Event deleted successfully' };
   }
 }

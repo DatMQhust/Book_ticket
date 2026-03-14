@@ -190,6 +190,27 @@ export class MailService {
   }
 
   /**
+   * Gửi email xác nhận đã nhận sự kiện để xét duyệt (tới Organizer)
+   */
+  async sendEventSubmitted(payload: {
+    to: string;
+    organizerName: string;
+    eventName: string;
+  }): Promise<void> {
+    await this.mailerService.sendMail({
+      to: payload.to,
+      subject: `[HighShow] Đã nhận sự kiện "${payload.eventName}" — Đang xem xét`,
+      template: 'event-submitted',
+      context: {
+        ...payload,
+        slaText: '2 ngày làm việc',
+        supportEmail: process.env.MAIL_FROM,
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
+  /**
    * Gửi email thông báo sự kiện cần chỉnh sửa (tới Organizer)
    */
   async sendEventNeedsRevision(payload: {
@@ -207,6 +228,27 @@ export class MailService {
       context: {
         ...payload,
         deadlineDays: payload.deadlineDays ?? 5,
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
+  /**
+   * Gửi email thông báo sự kiện bị từ chối vĩnh viễn (tới Organizer)
+   */
+  async sendEventRejected(payload: {
+    to: string;
+    organizerName: string;
+    eventName: string;
+    reason: string;
+  }): Promise<void> {
+    await this.mailerService.sendMail({
+      to: payload.to,
+      subject: `[HighShow] Sự kiện "${payload.eventName}" không được phê duyệt`,
+      template: 'event-rejected',
+      context: {
+        ...payload,
+        supportEmail: process.env.MAIL_FROM,
         year: new Date().getFullYear(),
       },
     });

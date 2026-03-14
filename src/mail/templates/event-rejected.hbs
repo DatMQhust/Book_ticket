@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Su kien khong duoc phe duyet</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0f0f0f; font-family: 'Segoe UI', Arial, sans-serif; color: #e5e5e5; }
+    .wrapper { max-width: 600px; margin: 40px auto; background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #2a2a2a; }
+    .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 32px 40px; text-align: center; }
+    .header h1 { margin: 0; color: #fff; font-size: 24px; font-weight: 700; }
+    .body { padding: 36px 40px; }
+    .body p { line-height: 1.7; color: #d4d4d4; font-size: 15px; margin: 0 0 16px; }
+    .info-box { background: #111; border: 1px solid #3f3f46; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
+    .info-row { display: flex; justify-content: space-between; padding: 6px 0; }
+    .info-label { color: #71717a; font-size: 13px; }
+    .info-value { color: #e5e5e5; font-size: 13px; font-weight: 600; }
+    .reason-box { background: #1c0a0a; border: 1px solid #991b1b; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
+    .reason-box p { color: #fca5a5; font-size: 14px; margin: 0; white-space: pre-line; }
+    .footer { text-align: center; padding: 24px 40px; border-top: 1px solid #2a2a2a; }
+    .footer p { margin: 0; font-size: 12px; color: #525252; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>🏢 HighShow</h1>
+    </div>
+    <div class="body">
+      <p>Xin chao <strong>{{organizerName}}</strong>,</p>
+      <p>Rat tiec, sau khi xem xet, su kien cua ban <strong>khong duoc phe duyet</strong> vi vi pham chinh sach hoac quy dinh cua HighShow.</p>
+      <div class="info-box">
+        <div class="info-row">
+          <span class="info-label">Ten su kien</span>
+          <span class="info-value">{{eventName}}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Trang thai</span>
+          <span class="info-value" style="color:#f87171;">Tu choi vinh vien</span>
+        </div>
+      </div>
+      <p><strong>Ly do tu choi:</strong></p>
+      <div class="reason-box">
+        <p>{{reason}}</p>
+      </div>
+      <p style="font-size:13px; color:#71717a;">Neu ban cho rang day la quyet dinh chua chinh xac, vui long lien he ho tro: <a href="mailto:{{supportEmail}}" style="color:#facc15;">{{supportEmail}}</a></p>
+      <p style="font-size:13px; color:#71717a;">⚠️ Vi pham nhieu lan co the dan den viec khoa tai khoan Organizer.</p>
+      <p>Tran trong,<br/><strong>Doi ngu HighShow</strong></p>
+    </div>
+    <div class="footer">
+      <p>© {{year}} HighShow. Khong reply email nay — day la email tu dong.</p>
+    </div>
+  </div>
+</body>
+</html>

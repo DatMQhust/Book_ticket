@@ -5,6 +5,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   ManyToOne,
   JoinColumn,
   OneToMany,
@@ -13,6 +14,10 @@ import {
 import { TicketTypeEntity } from '../../ticket-type/entities/ticket-type.entity';
 import { EventSessionEntity } from '../../event-session/entities/event-session.entity';
 export enum EventStatus {
+  DRAFT = 'draft',
+  PENDING_REVIEW = 'pending_review',
+  NEEDS_REVISION = 'needs_revision',
+  REJECTED = 'rejected',
   UPCOMING = 'upcoming',
   ONGOING = 'ongoing',
   ENDED = 'ended',
@@ -55,7 +60,7 @@ export class EventEntity {
   @Column({
     type: 'enum',
     enum: EventStatus,
-    default: EventStatus.UPCOMING,
+    default: EventStatus.DRAFT,
   })
   status: EventStatus;
 
@@ -80,6 +85,18 @@ export class EventEntity {
   @OneToMany(() => TicketTypeEntity, (ticketType) => ticketType.event)
   ticketTypes: TicketTypeEntity[];
 
+  @Column({ type: 'text', nullable: true })
+  adminNotes: string;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  feePercentage: number;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  submittedAt: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  reviewedAt: Date;
+
   @ManyToOne(() => OrganizerEntity, (organizer) => organizer.events)
   @JoinColumn({ name: 'organizerId' })
   organizer: OrganizerEntity;
@@ -89,4 +106,7 @@ export class EventEntity {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
+
+  @DeleteDateColumn({ type: 'timestamptz', nullable: true })
+  deletedAt: Date;
 }

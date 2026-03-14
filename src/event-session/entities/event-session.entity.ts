@@ -10,12 +10,14 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
-export enum EventStatus {
+
+export enum SessionStatus {
   UPCOMING = 'upcoming',
   ONGOING = 'ongoing',
   ENDED = 'ended',
   CANCELLED = 'cancelled',
 }
+
 @Entity('event_sessions')
 export class EventSessionEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -38,10 +40,16 @@ export class EventSessionEntity {
 
   @Column({
     type: 'enum',
-    enum: EventStatus,
-    default: EventStatus.UPCOMING,
+    enum: SessionStatus,
+    default: SessionStatus.UPCOMING,
   })
-  status: EventStatus;
+  status: SessionStatus;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  sessionLocation: string;
+
+  @Column({ type: 'int', nullable: true })
+  capacity: number;
 
   @OneToMany(() => TicketTypeEntity, (ticketType) => ticketType.session, {
     cascade: true,

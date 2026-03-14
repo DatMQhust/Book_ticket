@@ -18,6 +18,7 @@ import { UserRole } from '../users/entities/user.entity';
 import { UpdateSepayConfigDto } from './dto/update-sepay-config.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { ReviewKycDto } from './dto/review-kyc.dto';
+import { ReviewEventDto } from './dto/review-event.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('admin')
@@ -67,8 +68,28 @@ export class AdminController {
   async getAllEvents(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
+    @Query('status') status?: string,
   ) {
-    return this.adminService.getAllEvents(parseInt(page), parseInt(limit));
+    return this.adminService.getAllEvents(
+      parseInt(page),
+      parseInt(limit),
+      status,
+    );
+  }
+
+  @Get('events/:id')
+  async getEventDetail(@Param('id') eventId: string) {
+    return this.adminService.getEventDetail(eventId);
+  }
+
+  @Patch('events/:id/review')
+  @HttpCode(HttpStatus.OK)
+  async reviewEvent(
+    @User() user: any,
+    @Param('id') eventId: string,
+    @Body() reviewEventDto: ReviewEventDto,
+  ) {
+    return this.adminService.reviewEvent(eventId, user.id, reviewEventDto);
   }
 
   @Patch('users/:id/status')

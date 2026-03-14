@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Su kien can chinh sua</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0f0f0f; font-family: 'Segoe UI', Arial, sans-serif; color: #e5e5e5; }
+    .wrapper { max-width: 600px; margin: 40px auto; background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #2a2a2a; }
+    .header { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); padding: 32px 40px; text-align: center; }
+    .header h1 { margin: 0; color: #fff; font-size: 24px; font-weight: 700; }
+    .body { padding: 36px 40px; }
+    .body p { line-height: 1.7; color: #d4d4d4; font-size: 15px; margin: 0 0 16px; }
+    .info-box { background: #111; border: 1px solid #3f3f46; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
+    .info-row { display: flex; justify-content: space-between; padding: 6px 0; }
+    .info-label { color: #71717a; font-size: 13px; }
+    .info-value { color: #e5e5e5; font-size: 13px; font-weight: 600; }
+    .notes-box { background: #1c1200; border: 1px solid #92400e; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
+    .notes-box p { color: #fcd34d; font-size: 14px; margin: 0; white-space: pre-line; }
+    .btn { display: inline-block; margin-top: 4px; padding: 12px 28px; background: #f97316; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; }
+    .deadline { color: #f87171; font-weight: 600; }
+    .footer { text-align: center; padding: 24px 40px; border-top: 1px solid #2a2a2a; }
+    .footer p { margin: 0; font-size: 12px; color: #525252; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>🏢 HighShow</h1>
+    </div>
+    <div class="body">
+      <p>Xin chao <strong>{{organizerName}}</strong>,</p>
+      <p>⚠️ Su kien cua ban can duoc bo sung / chinh sua truoc khi duoc phe duyet. Vui long xem xet cac noi dung duoi day va cap nhat trong <span class="deadline">{{deadlineDays}} ngay</span>.</p>
+      <div class="info-box">
+        <div class="info-row">
+          <span class="info-label">Ten su kien</span>
+          <span class="info-value">{{eventName}}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Thoi han chinh sua</span>
+          <span class="info-value deadline">{{deadlineDays}} ngay lam viec</span>
+        </div>
+      </div>
+      <p><strong>Noi dung can chinh sua:</strong></p>
+      <div class="notes-box">
+        <p>{{notes}}</p>
+      </div>
+      <p style="text-align:center;">
+        <a href="{{editUrl}}" class="btn">Chinh sua su kien →</a>
+      </p>
+      <p style="font-size:13px; color:#71717a; margin-top:16px;">Sau khi chinh sua, nhan "Gui lai de duyet" de Admin xem xet lai. Qua thoi han tren ma khong phan hoi, su kien se tu dong bi huy.</p>
+      <p>Tran trong,<br/><strong>Doi ngu HighShow</strong></p>
+    </div>
+    <div class="footer">
+      <p>© {{year}} HighShow. Khong reply email nay — day la email tu dong.</p>
+    </div>
+  </div>
+</body>
+</html>
