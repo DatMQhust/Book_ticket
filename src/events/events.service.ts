@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -67,7 +68,19 @@ export class EventsService {
 
       const savedEvent = await queryRunner.manager.save(event);
 
-      if (createEventDto.sessions && createEventDto.sessions.length > 0) {
+      const hasSessions =
+        createEventDto.sessions && createEventDto.sessions.length > 0;
+      const hasRootTickets =
+        createEventDto.ticketTypes && createEventDto.ticketTypes.length > 0;
+
+      if (hasSessions && hasRootTickets) {
+        throw new BadRequestException(
+          'Cannot provide both sessions and ticketTypes. Use sessions for multi-session events or ticketTypes for single events.',
+        );
+      }
+
+      if (hasSessions) {
+        // Chế độ nhiều suất: vé gắn với từng session
         for (const sessionDto of createEventDto.sessions) {
           const session = this.sessionRepository.create({
             name: sessionDto.name,
@@ -95,7 +108,24 @@ export class EventsService {
             await queryRunner.manager.save(ticketTypes);
           }
         }
+      } else if (hasRootTickets) {
+        // Chế độ sự kiện đơn: vé gắn thẳng vào event
+        const ticketTypes = createEventDto.ticketTypes.map((ticketDto) => {
+          return this.ticketTypeRepository.create({
+            name: ticketDto.name,
+            price: ticketDto.price,
+            quantity: ticketDto.quantity,
+            description: ticketDto.description || '',
+            rank: ticketDto.rank || 1,
+            sold: 0,
+            event: savedEvent,
+            session: null,
+          });
+        });
+
+        await queryRunner.manager.save(ticketTypes);
       }
+
       await queryRunner.commitTransaction();
 
       return savedEvent;
