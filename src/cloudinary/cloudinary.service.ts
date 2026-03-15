@@ -87,6 +87,28 @@ export class CloudinaryService {
   }
 
   /**
+   * Upload tài liệu pháp lý (PDF, ảnh) lên Cloudinary
+   * @param file File tài liệu
+   * @param folder Tên thư mục trên Cloudinary
+   * @returns
+   */
+  async uploadDocument(
+    file: Express.Multer.File,
+    folder?: string,
+  ): Promise<CloudinaryUploadResponse> {
+    if (!file) {
+      throw new InternalServerErrorException('Không có file nào được cung cấp');
+    }
+
+    const options = {
+      folder: folder || 'default-documents',
+      resource_type: 'auto',
+    };
+
+    return this.uploadStream(file, options);
+  }
+
+  /**
    * Xóa file khỏi Cloudinary
    * @param public_id ID của file trên Cloudinary
    * @param resource_type Loại tài nguyên ('image', 'video', 'raw')

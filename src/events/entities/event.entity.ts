@@ -85,6 +85,14 @@ export class EventEntity {
   @OneToMany(() => TicketTypeEntity, (ticketType) => ticketType.event)
   ticketTypes: TicketTypeEntity[];
 
+  @Column({ type: 'jsonb', nullable: true })
+  documents: {
+    venueConfirmation?: string;
+    performanceLicense?: string;
+    fireSafetyPermit?: string;
+    eventInsurance?: string;
+  } | null;
+
   @Column({ type: 'text', nullable: true })
   adminNotes: string;
 

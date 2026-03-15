@@ -81,16 +81,49 @@ export class EventsService {
     bannerImage: Express.Multer.File,
     mainImage: Express.Multer.File,
     userId: string,
+    documentFiles?: {
+      venueConfirmation?: Express.Multer.File;
+      performanceLicense?: Express.Multer.File;
+      fireSafetyPermit?: Express.Multer.File;
+      eventInsurance?: Express.Multer.File;
+    },
   ) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      const [bannerUpload, imageUpload] = await Promise.all([
+      const uploadPromises: Promise<any>[] = [
         this.cloudinaryService.uploadImage(bannerImage, 'events/banners'),
         this.cloudinaryService.uploadImage(mainImage, 'events/images'),
-      ]);
+      ];
+
+      const docKeys = [
+        'venueConfirmation',
+        'performanceLicense',
+        'fireSafetyPermit',
+        'eventInsurance',
+      ] as const;
+      const docUploadEntries = docKeys
+        .filter((key) => documentFiles?.[key])
+        .map((key) => ({
+          key,
+          promise: this.cloudinaryService.uploadDocument(
+            documentFiles[key],
+            'events/documents',
+          ),
+        }));
+
+      docUploadEntries.forEach(({ promise }) => uploadPromises.push(promise));
+
+      const uploadResults = await Promise.all(uploadPromises);
+      const [bannerUpload, imageUpload] = uploadResults;
+
+      const documents: Record<string, string> = {};
+      docUploadEntries.forEach(({ key }, index) => {
+        documents[key] = (uploadResults[2 + index] as any).secure_url;
+      });
+
       const organizer = await queryRunner.manager.findOne(OrganizerEntity, {
         where: { user: { id: userId } },
       });
@@ -99,6 +132,7 @@ export class EventsService {
         ...createEventDto,
         bannerUrl: bannerUpload.secure_url,
         imageUrl: imageUpload.secure_url,
+        documents: Object.keys(documents).length > 0 ? documents : null,
         organizer: { id: organizerId } as OrganizerEntity,
         sessions: [],
       });

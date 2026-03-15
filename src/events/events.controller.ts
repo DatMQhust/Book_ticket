@@ -59,6 +59,10 @@ export class EventsController {
     FileFieldsInterceptor([
       { name: 'bannerImage', maxCount: 1 },
       { name: 'mainImage', maxCount: 1 },
+      { name: 'venueConfirmation', maxCount: 1 },
+      { name: 'performanceLicense', maxCount: 1 },
+      { name: 'fireSafetyPermit', maxCount: 1 },
+      { name: 'eventInsurance', maxCount: 1 },
     ]),
   )
   async create(
@@ -67,6 +71,10 @@ export class EventsController {
     files: {
       bannerImage?: Express.Multer.File[];
       mainImage?: Express.Multer.File[];
+      venueConfirmation?: Express.Multer.File[];
+      performanceLicense?: Express.Multer.File[];
+      fireSafetyPermit?: Express.Multer.File[];
+      eventInsurance?: Express.Multer.File[];
     },
     @Request() req,
   ) {
@@ -85,6 +93,12 @@ export class EventsController {
       files.bannerImage[0],
       files.mainImage[0],
       userId,
+      {
+        venueConfirmation: files.venueConfirmation?.[0],
+        performanceLicense: files.performanceLicense?.[0],
+        fireSafetyPermit: files.fireSafetyPermit?.[0],
+        eventInsurance: files.eventInsurance?.[0],
+      },
     );
   }
 
