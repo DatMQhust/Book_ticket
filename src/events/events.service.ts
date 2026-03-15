@@ -23,6 +23,11 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { OrganizerEntity } from '../organizers/entities/organizer.entity';
 import { TicketTypeEntity } from '../ticket-type/entities/ticket-type.entity';
 import { MailService } from '../mail/mail.service';
+import {
+  CancelRequestStatus,
+  EventCancelRequestEntity,
+} from './entities/event-cancel-request.entity';
+import { CancelEventRequestDto } from './dto/cancel-event-request.dto';
 
 @Injectable()
 export class EventsService {
@@ -38,6 +43,9 @@ export class EventsService {
 
     @InjectRepository(OrganizerEntity)
     private readonly organizerRepository: Repository<OrganizerEntity>,
+
+    @InjectRepository(EventCancelRequestEntity)
+    private readonly cancelRequestRepository: Repository<EventCancelRequestEntity>,
 
     private readonly dataSource: DataSource,
 
@@ -540,5 +548,56 @@ export class EventsService {
 
     await this.eventRepository.softDelete(eventId);
     return { message: 'Event deleted successfully' };
+  }
+
+  // ─── Huỷ sự kiện ─────────────────────────────────────────────────────────
+
+  async cancelRequest(
+    eventId: string,
+    userId: string,
+    dto: CancelEventRequestDto,
+  ): Promise<EventCancelRequestEntity> {
+    const organizer = await this.organizerRepository.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!organizer) {
+      throw new NotFoundException('Organizer profile not found');
+    }
+
+    const event = await this.eventRepository.findOne({
+      where: { id: eventId, organizer: { id: organizer.id } },
+    });
+    if (!event) {
+      throw new NotFoundException(
+        'Event not found or not owned by this organizer',
+      );
+    }
+
+    if (
+      event.status !== EventStatus.UPCOMING &&
+      event.status !== EventStatus.ONGOING
+    ) {
+      throw new BadRequestException(
+        'Only UPCOMING or ONGOING events can be cancelled',
+      );
+    }
+
+    const existing = await this.cancelRequestRepository.findOne({
+      where: { event: { id: eventId }, status: CancelRequestStatus.PENDING },
+    });
+    if (existing) {
+      throw new BadRequestException(
+        'A cancel request is already pending for this event',
+      );
+    }
+
+    const cancelRequest = this.cancelRequestRepository.create({
+      event,
+      reason: dto.reason,
+      supportingDocs: dto.supportingDocs ?? null,
+      refundProposal: dto.refundProposal ?? 'full',
+    });
+
+    return this.cancelRequestRepository.save(cancelRequest);
   }
 }

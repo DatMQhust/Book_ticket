@@ -254,6 +254,47 @@ export class MailService {
     });
   }
 
+  /**
+   * Gửi email cho Organizer khi Admin duyệt yêu cầu huỷ sự kiện
+   */
+  async sendCancelRequestApproved(payload: {
+    to: string;
+    organizerName: string;
+    eventName: string;
+  }): Promise<void> {
+    await this.mailerService.sendMail({
+      to: payload.to,
+      subject: `[HighShow] Yêu cầu huỷ sự kiện "${payload.eventName}" đã được chấp thuận`,
+      template: 'cancel-request-approved',
+      context: {
+        ...payload,
+        supportEmail: process.env.MAIL_FROM,
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
+  /**
+   * Gửi email cho Organizer khi Admin từ chối yêu cầu huỷ sự kiện
+   */
+  async sendCancelRequestRejected(payload: {
+    to: string;
+    organizerName: string;
+    eventName: string;
+    reason: string;
+  }): Promise<void> {
+    await this.mailerService.sendMail({
+      to: payload.to,
+      subject: `[HighShow] Yêu cầu huỷ sự kiện "${payload.eventName}" bị từ chối`,
+      template: 'cancel-request-rejected',
+      context: {
+        ...payload,
+        supportEmail: process.env.MAIL_FROM,
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
   // ─── Collaborator (CTV) ──────────────────────────────────────────────────
 
   /**

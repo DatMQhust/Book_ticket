@@ -19,6 +19,7 @@ import { UpdateSepayConfigDto } from './dto/update-sepay-config.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { ReviewKycDto } from './dto/review-kyc.dto';
 import { ReviewEventDto } from './dto/review-event.dto';
+import { ReviewCancelRequestDto } from './dto/review-cancel-request.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('admin')
@@ -75,6 +76,20 @@ export class AdminController {
       parseInt(limit),
       status,
     );
+  }
+
+  @Get('events/cancel-requests')
+  async getCancelRequests(@Query('status') status?: string) {
+    return this.adminService.getCancelRequests(status);
+  }
+
+  @Patch('events/:id/cancel')
+  @HttpCode(HttpStatus.OK)
+  async approveCancellation(
+    @Param('id') eventId: string,
+    @Body() dto: ReviewCancelRequestDto,
+  ) {
+    return this.adminService.approveCancellation(eventId, dto);
   }
 
   @Get('events/:id')

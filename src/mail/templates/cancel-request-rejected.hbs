@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yêu cầu huỷ sự kiện bị từ chối</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #0f0f0f; font-family: 'Segoe UI', Arial, sans-serif; color: #e0e0e0; }
+    .container { max-width: 600px; margin: 40px auto; background-color: #1a1a1a; border-radius: 12px; overflow: hidden; }
+    .header { background-color: #b22c2c; padding: 32px 40px; text-align: center; }
+    .header h1 { margin: 0; color: #fff; font-size: 22px; font-weight: 700; }
+    .body { padding: 36px 40px; }
+    .body p { line-height: 1.7; color: #ccc; margin: 0 0 16px; }
+    .event-name { font-size: 18px; font-weight: 700; color: #c89c2a; margin: 20px 0; }
+    .reason-box { background-color: #2a1a1a; border-left: 4px solid #b22c2c; border-radius: 6px; padding: 16px 20px; margin: 24px 0; }
+    .reason-box p { margin: 0; color: #ccc; font-size: 14px; }
+    .footer { background-color: #111; padding: 20px 40px; text-align: center; }
+    .footer p { color: #555; font-size: 12px; margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>HighShow — Yêu cầu huỷ bị từ chối</h1>
+    </div>
+    <div class="body">
+      <p>Xin chào <strong>{{organizerName}}</strong>,</p>
+      <p>Sau khi xem xét, Admin đã <strong style="color:#e05555">từ chối</strong> yêu cầu huỷ sự kiện:</p>
+      <p class="event-name">🎪 {{eventName}}</p>
+      <div class="reason-box">
+        <p><strong>Lý do:</strong> {{reason}}</p>
+      </div>
+      <p>Sự kiện của bạn vẫn tiếp tục diễn ra bình thường. Nếu cần hỗ trợ thêm, vui lòng liên hệ: <a href="mailto:{{supportEmail}}" style="color:#c89c2a">{{supportEmail}}</a></p>
+    </div>
+    <div class="footer">
+      <p>© {{year}} HighShow. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>

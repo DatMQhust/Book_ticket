@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yêu cầu huỷ sự kiện được duyệt</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #0f0f0f; font-family: 'Segoe UI', Arial, sans-serif; color: #e0e0e0; }
+    .container { max-width: 600px; margin: 40px auto; background-color: #1a1a1a; border-radius: 12px; overflow: hidden; }
+    .header { background-color: #c89c2a; padding: 32px 40px; text-align: center; }
+    .header h1 { margin: 0; color: #0f0f0f; font-size: 22px; font-weight: 700; }
+    .body { padding: 36px 40px; }
+    .body p { line-height: 1.7; color: #ccc; margin: 0 0 16px; }
+    .event-name { font-size: 18px; font-weight: 700; color: #c89c2a; margin: 20px 0; }
+    .info-box { background-color: #2a2a2a; border-left: 4px solid #c89c2a; border-radius: 6px; padding: 16px 20px; margin: 24px 0; }
+    .info-box p { margin: 0; color: #ccc; font-size: 14px; }
+    .footer { background-color: #111; padding: 20px 40px; text-align: center; }
+    .footer p { color: #555; font-size: 12px; margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>HighShow — Yêu cầu huỷ đã được duyệt</h1>
+    </div>
+    <div class="body">
+      <p>Xin chào <strong>{{organizerName}}</strong>,</p>
+      <p>Yêu cầu huỷ sự kiện của bạn đã được Admin xem xét và <strong style="color:#c89c2a">chấp thuận</strong>.</p>
+      <p class="event-name">🎪 {{eventName}}</p>
+      <div class="info-box">
+        <p>Hệ thống đang tiến hành hoàn tiền tự động cho toàn bộ người mua vé. Quá trình này có thể mất vài phút đến vài giờ tùy số lượng vé.</p>
+      </div>
+      <p>Người mua vé sẽ nhận được email xác nhận hoàn tiền riêng. Bạn không cần thực hiện thêm bất kỳ thao tác nào.</p>
+      <p>Nếu có thắc mắc, vui lòng liên hệ: <a href="mailto:{{supportEmail}}" style="color:#c89c2a">{{supportEmail}}</a></p>
+    </div>
+    <div class="footer">
+      <p>© {{year}} HighShow. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>

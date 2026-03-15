@@ -3,6 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity, UserRole } from '../users/entities/user.entity';
@@ -16,6 +18,14 @@ import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { ReviewKycDto } from './dto/review-kyc.dto';
 import { ReviewEventDecision, ReviewEventDto } from './dto/review-event.dto';
 import { MailService } from '../mail/mail.service';
+import {
+  CancelRequestStatus,
+  EventCancelRequestEntity,
+} from '../events/entities/event-cancel-request.entity';
+import {
+  ReviewCancelDecision,
+  ReviewCancelRequestDto,
+} from './dto/review-cancel-request.dto';
 
 @Injectable()
 export class AdminService {
@@ -30,6 +40,10 @@ export class AdminService {
     private readonly orderRepository: Repository<OrderEntity>,
     @InjectRepository(OrganizationPaymentConfigEntity)
     private readonly paymentConfigRepository: Repository<OrganizationPaymentConfigEntity>,
+    @InjectRepository(EventCancelRequestEntity)
+    private readonly cancelRequestRepository: Repository<EventCancelRequestEntity>,
+    @InjectQueue('batch-refund')
+    private readonly batchRefundQueue: Queue,
     private readonly mailService: MailService,
   ) {}
 
@@ -400,6 +414,87 @@ export class AdminService {
     }
 
     return config;
+  }
+
+  // ─── Huỷ sự kiện ─────────────────────────────────────────────────────────
+
+  async getCancelRequests(status?: string) {
+    const where = status ? { status: status as CancelRequestStatus } : {};
+
+    return this.cancelRequestRepository.find({
+      where,
+      relations: ['event', 'event.organizer', 'event.organizer.user'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async approveCancellation(
+    eventId: string,
+    dto: ReviewCancelRequestDto,
+  ): Promise<{ message: string }> {
+    const cancelRequest = await this.cancelRequestRepository.findOne({
+      where: { event: { id: eventId }, status: CancelRequestStatus.PENDING },
+      relations: [
+        'event',
+        'event.sessions',
+        'event.organizer',
+        'event.organizer.user',
+      ],
+    });
+
+    if (!cancelRequest) {
+      throw new NotFoundException(
+        `No pending cancel request found for event ${eventId}`,
+      );
+    }
+
+    if (dto.decision === ReviewCancelDecision.APPROVED) {
+      cancelRequest.status = CancelRequestStatus.APPROVED;
+      cancelRequest.adminNotes = dto.adminNotes ?? null;
+      await this.cancelRequestRepository.save(cancelRequest);
+
+      // Đóng bán vé ngay lập tức
+      await this.eventRepository.update(eventId, {
+        endSellDate: new Date(),
+      });
+
+      const eventName = cancelRequest.event.name;
+      const eventDate =
+        cancelRequest.event.sessions?.[0]?.startTime?.toLocaleDateString(
+          'vi-VN',
+        ) ?? '';
+
+      // Enqueue chunk đầu tiên — processor tự re-enqueue các chunk tiếp theo
+      await this.batchRefundQueue.add(
+        'process-refund',
+        { eventId, offset: 0, eventName, eventDate },
+        { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
+      );
+
+      // Thông báo Organizer
+      await this.mailService.sendCancelRequestApproved({
+        to: cancelRequest.event.organizer.user.email,
+        organizerName: cancelRequest.event.organizer.name,
+        eventName: cancelRequest.event.name,
+      });
+
+      return { message: 'Cancel request approved. Batch refund enqueued.' };
+    } else {
+      // REJECTED
+      cancelRequest.status = CancelRequestStatus.REJECTED;
+      cancelRequest.adminNotes = dto.adminNotes ?? null;
+      await this.cancelRequestRepository.save(cancelRequest);
+
+      // Thông báo Organizer
+      await this.mailService.sendCancelRequestRejected({
+        to: cancelRequest.event.organizer.user.email,
+        organizerName: cancelRequest.event.organizer.name,
+        eventName: cancelRequest.event.name,
+        reason: dto.adminNotes ?? 'Không đủ điều kiện để huỷ sự kiện',
+      });
+
+      return { message: 'Cancel request rejected.' };
+    }
   }
 
   async reviewKycApplication(

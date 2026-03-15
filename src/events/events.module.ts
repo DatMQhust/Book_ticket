@@ -8,6 +8,9 @@ import { OrganizerEntity } from 'src/organizers/entities/organizer.entity';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { TicketTypeEntity } from 'src/ticket-type/entities/ticket-type.entity';
 import { MailModule } from 'src/mail/mail.module';
+import { EventCancelRequestEntity } from './entities/event-cancel-request.entity';
+import { BullModule } from '@nestjs/bull';
+import { BatchRefundProcessor } from './processors/batch-refund.processor';
 
 @Module({
   imports: [
@@ -16,12 +19,14 @@ import { MailModule } from 'src/mail/mail.module';
       EventSessionEntity,
       OrganizerEntity,
       TicketTypeEntity,
+      EventCancelRequestEntity,
     ]),
+    BullModule.registerQueue({ name: 'batch-refund' }),
     CloudinaryModule,
     MailModule,
   ],
   controllers: [EventsController],
-  providers: [EventsService],
+  providers: [EventsService, BatchRefundProcessor],
   exports: [EventsService],
 })
 export class EventsModule {}

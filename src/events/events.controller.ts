@@ -25,6 +25,7 @@ import { GetEventsQueryDto } from './dto/get-events-query.dto';
 import { Throttle } from '@nestjs/throttler';
 import { AddTicketTypeToEventDto } from './dto/add-ticket-type.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { CancelEventRequestDto } from './dto/cancel-event-request.dto';
 
 @ApiTags('events')
 @ApiBearerAuth()
@@ -143,5 +144,16 @@ export class EventsController {
       description: dto.description,
       rank: dto.rank,
     });
+  }
+
+  @Post(':id/cancel-request')
+  @Roles(UserRole.ORGANIZER)
+  @HttpCode(HttpStatus.CREATED)
+  submitCancelRequest(
+    @Param('id') id: string,
+    @Body() dto: CancelEventRequestDto,
+    @Request() req,
+  ) {
+    return this.eventService.cancelRequest(id, req.user.id, dto);
   }
 }
