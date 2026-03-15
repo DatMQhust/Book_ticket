@@ -16,6 +16,7 @@ export enum UserRole {
   ADMIN = 'admin',
   ORGANIZER = 'organizer',
   USER = 'user',
+  COLLABORATOR = 'collaborator',
 }
 @Entity('users')
 export class UserEntity {

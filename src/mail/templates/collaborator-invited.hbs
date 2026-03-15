@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bạn được mời làm CTV trên HighShow</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0f0f0f; font-family: 'Segoe UI', Arial, sans-serif; color: #e5e5e5; }
+    .wrapper { max-width: 600px; margin: 40px auto; background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #2a2a2a; }
+    .header { background: linear-gradient(135deg, #facc15 0%, #f59e0b 100%); padding: 32px 40px; text-align: center; }
+    .header h1 { margin: 0; color: #000; font-size: 24px; font-weight: 700; }
+    .badge { display: inline-block; background: #000; color: #facc15; font-weight: 700; font-size: 13px; padding: 6px 16px; border-radius: 999px; margin-top: 12px; }
+    .body { padding: 36px 40px; }
+    .body p { line-height: 1.7; color: #d4d4d4; font-size: 15px; margin: 0 0 16px; }
+    .info-box { background: #262626; border: 1px solid #3f3f46; border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+    .info-box p { margin: 0 0 8px; font-size: 14px; }
+    .info-box p:last-child { margin: 0; }
+    .info-box strong { color: #facc15; }
+    .event-list { list-style: none; padding: 0; margin: 8px 0 0; }
+    .event-list li { padding: 4px 0; font-size: 14px; color: #d4d4d4; }
+    .event-list li::before { content: "🎫 "; }
+    .credentials { background: #1c1917; border: 1px solid #facc15; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
+    .credentials p { margin: 0 0 6px; font-size: 14px; }
+    .credentials p:last-child { margin: 0; }
+    .credentials code { background: #292524; padding: 2px 8px; border-radius: 4px; font-family: monospace; color: #facc15; font-size: 13px; }
+    .btn { display: inline-block; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; background: #facc15; color: #000; margin-top: 8px; }
+    .warning { font-size: 13px; color: #a16207; background: #1c1917; border: 1px solid #a16207; border-radius: 6px; padding: 10px 14px; margin-top: 16px; }
+    .footer { text-align: center; padding: 24px 40px; border-top: 1px solid #2a2a2a; }
+    .footer p { margin: 0; font-size: 12px; color: #525252; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>🏢 HighShow</h1>
+      <div class="badge">🎟️ Lời mời Cộng tác viên</div>
+    </div>
+    <div class="body">
+      <p>Xin chào <strong>{{collaboratorName}}</strong>,</p>
+      <p>Bạn vừa được <strong>{{organizerName}}</strong> mời tham gia với vai trò <strong>Cộng tác viên (CTV)</strong> trên nền tảng HighShow.</p>
+
+      <div class="info-box">
+        <p><strong>Sự kiện bạn được giao phụ trách check-in:</strong></p>
+        <ul class="event-list">
+          {{#each eventNames}}
+          <li>{{this}}</li>
+          {{/each}}
+        </ul>
+      </div>
+
+      {{#if tempPassword}}
+      <p>Một tài khoản đã được tạo cho bạn. Thông tin đăng nhập:</p>
+      <div class="credentials">
+        <p>Email: <code>{{loginEmail}}</code></p>
+        <p>Mật khẩu tạm: <code>{{tempPassword}}</code></p>
+      </div>
+      <div class="warning">
+        ⚠️ Vui lòng đổi mật khẩu sau khi đăng nhập lần đầu để bảo mật tài khoản.
+      </div>
+      {{else}}
+      <p>Đăng nhập bằng tài khoản hiện có của bạn:</p>
+      <div class="credentials">
+        <p>Email: <code>{{loginEmail}}</code></p>
+      </div>
+      {{/if}}
+
+      <br/>
+      <a href="{{loginUrl}}" class="btn">🚀 Đăng nhập ngay</a>
+
+      <p style="margin-top: 24px;">Sau khi đăng nhập, bạn có thể sử dụng tính năng Check-in tại cổng sự kiện được giao. Mọi thắc mắc vui lòng liên hệ trực tiếp với ban tổ chức <strong>{{organizerName}}</strong>.</p>
+      <p>Trân trọng,<br/><strong>Đội ngũ HighShow</strong></p>
+    </div>
+    <div class="footer">
+      <p>© {{year}} HighShow. Không reply email này — đây là email tự động.</p>
+    </div>
+  </div>
+</body>
+</html>

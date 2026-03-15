@@ -253,4 +253,29 @@ export class MailService {
       },
     });
   }
+
+  // ─── Collaborator (CTV) ──────────────────────────────────────────────────
+
+  /**
+   * Gửi email mời CTV — kèm thông tin đăng nhập nếu tạo tài khoản mới
+   */
+  async sendCollaboratorInvitation(payload: {
+    to: string;
+    collaboratorName: string;
+    organizerName: string;
+    eventNames: string[];
+    loginEmail: string;
+    tempPassword?: string;
+  }): Promise<void> {
+    await this.mailerService.sendMail({
+      to: payload.to,
+      subject: `[HighShow] Bạn được mời làm CTV cho sự kiện của ${payload.organizerName}`,
+      template: 'collaborator-invited',
+      context: {
+        ...payload,
+        loginUrl: `${process.env.CLIENT_URL}/login`,
+        year: new Date().getFullYear(),
+      },
+    });
+  }
 }

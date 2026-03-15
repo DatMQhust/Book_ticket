@@ -22,6 +22,8 @@ import { RedisModule } from '@nestjs-modules/ioredis';
 import { BullModule } from '@nestjs/bull';
 import { AdminModule } from './admin/admin.module';
 import { MailModule } from './mail/mail.module';
+import { CollaboratorsModule } from './collaborators/collaborators.module';
+
 @Module({
   imports: [
     ThrottlerModule.forRoot([
@@ -68,6 +70,7 @@ import { MailModule } from './mail/mail.module';
     BookingsModule,
     AdminModule,
     MailModule,
+    CollaboratorsModule,
   ],
   controllers: [AppController],
   providers: [
