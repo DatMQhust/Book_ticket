@@ -319,6 +319,15 @@ export class BookingsService implements OnModuleInit {
         })),
       });
 
+      // Emit stats update (fire-and-forget — không block response)
+      this.emitTicketSoldStats(
+        ticketTypeId,
+        ticketType,
+        order.totalQuantity,
+      ).catch((err) =>
+        this.logger.error(`emitTicketSoldStats failed: ${err.message}`),
+      );
+
       this.logger.log(`Order ${orderCode} COMPLETED via SePay.`);
       return { success: true };
     } catch (err) {
@@ -328,5 +337,31 @@ export class BookingsService implements OnModuleInit {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  private async emitTicketSoldStats(
+    ticketTypeId: string,
+    ticketType: TicketTypeEntity,
+    quantity: number,
+  ): Promise<void> {
+    const ttWithEvent = await this.dataSource
+      .getRepository(TicketTypeEntity)
+      .findOne({
+        where: { id: ticketTypeId },
+        relations: ['event', 'session', 'session.event'],
+      });
+
+    if (!ttWithEvent) return;
+
+    const eventId = ttWithEvent.event?.id ?? ttWithEvent.session?.event?.id;
+    if (!eventId) return;
+
+    this.paymentEventsGateway.emitTicketSold(eventId, {
+      ticketTypeId,
+      ticketTypeName: ticketType.name,
+      quantity,
+      revenue: ticketType.price * quantity,
+      totalSold: ticketType.sold + quantity,
+    });
   }
 }

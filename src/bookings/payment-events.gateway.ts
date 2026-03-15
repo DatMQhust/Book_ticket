@@ -107,6 +107,19 @@ export class PaymentEventsGateway
     return { success: true, message: 'Unsubscribed from order updates' };
   }
 
+  @SubscribeMessage('join-event-stats')
+  handleJoinEventStats(client: Socket, eventId: string) {
+    client.join(`event-stats:${eventId}`);
+    this.logger.log(`Client ${client.id} joined event-stats:${eventId}`);
+    return { success: true, message: `Joined event-stats:${eventId}` };
+  }
+
+  @SubscribeMessage('leave-event-stats')
+  handleLeaveEventStats(client: Socket, eventId: string) {
+    client.leave(`event-stats:${eventId}`);
+    return { success: true, message: `Left event-stats:${eventId}` };
+  }
+
   emitPaymentUpdate(userId: string, orderId: string, data: any) {
     const socketIds = this.userSockets.get(userId);
     if (socketIds && socketIds.size > 0) {
@@ -138,5 +151,38 @@ export class PaymentEventsGateway
     };
 
     this.emitPaymentUpdate(userId, orderId, data);
+  }
+
+  // ─── Stats real-time ──────────────────────────────────────────────────────
+
+  emitTicketSold(
+    eventId: string,
+    data: {
+      ticketTypeId: string;
+      ticketTypeName: string;
+      quantity: number;
+      revenue: number;
+      totalSold: number;
+    },
+  ) {
+    this.server.to(`event-stats:${eventId}`).emit('ticket-sold', {
+      eventId,
+      ...data,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  emitTicketCheckedIn(
+    eventId: string,
+    data: {
+      ticketTypeId: string;
+      totalCheckedIn: number;
+    },
+  ) {
+    this.server.to(`event-stats:${eventId}`).emit('ticket-checked-in', {
+      eventId,
+      ...data,
+      timestamp: new Date().toISOString(),
+    });
   }
 }

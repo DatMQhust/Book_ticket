@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Thông tin sự kiện đã thay đổi</title>
+  <style>
+    body { margin: 0; padding: 0; background: #0f0f0f; font-family: 'Segoe UI', Arial, sans-serif; color: #e5e5e5; }
+    .wrapper { max-width: 600px; margin: 40px auto; background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #2a2a2a; }
+    .header { background: #27272a; padding: 32px 40px; text-align: center; border-bottom: 3px solid #facc15; }
+    .header h1 { margin: 0; color: #fff; font-size: 24px; font-weight: 700; }
+    .header p { margin: 6px 0 0; color: #fde68a; font-size: 14px; font-weight: 600; }
+    .body { padding: 36px 40px; }
+    .body p { line-height: 1.7; color: #d4d4d4; font-size: 15px; margin: 0 0 16px; }
+    .changes-box { background: #1c1a07; border: 1px solid #713f12; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
+    .changes-box p { margin: 0 0 8px; color: #fef08a; font-size: 14px; }
+    .changes-box p:last-child { margin-bottom: 0; }
+    .change-row { display: flex; gap: 8px; align-items: flex-start; margin: 6px 0; }
+    .change-label { color: #a3a3a3; min-width: 120px; font-size: 13px; }
+    .change-old { color: #f87171; text-decoration: line-through; font-size: 13px; }
+    .change-new { color: #86efac; font-size: 13px; font-weight: 600; }
+    .info-box { background: #0c1a2e; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 14px 18px; margin: 20px 0; }
+    .info-box p { margin: 0; color: #93c5fd; font-size: 14px; }
+    .footer { text-align: center; padding: 24px 40px; border-top: 1px solid #2a2a2a; }
+    .footer p { margin: 0; font-size: 12px; color: #525252; }
+    .footer a { color: #facc15; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>🏢 HighShow</h1>
+      <p>📢 Thông tin sự kiện đã được cập nhật</p>
+    </div>
+    <div class="body">
+      <p>Xin chào <strong>{{userName}}</strong>,</p>
+      <p>Chúng tôi muốn thông báo rằng sự kiện <strong>{{eventName}}</strong> mà bạn đã đặt vé có một số thay đổi quan trọng:</p>
+      <div class="changes-box">
+        <p><strong>Các thay đổi:</strong></p>
+        {{#each changes}}
+        <p>• <span class="change-label">{{this.field}}:</span>
+          <span class="change-old">{{this.from}}</span> →
+          <span class="change-new">{{this.to}}</span>
+        </p>
+        {{/each}}
+      </div>
+      <div class="info-box">
+        <p>ℹ️ Vé của bạn vẫn còn hiệu lực. Bạn không cần thực hiện thêm hành động nào trừ khi muốn hoàn vé.</p>
+      </div>
+      <p>Nếu có thắc mắc hoặc muốn hoàn vé do thay đổi này, vui lòng liên hệ: <a href="mailto:{{supportEmail}}" style="color:#facc15;">{{supportEmail}}</a></p>
+      <p>Trân trọng,<br/><strong>Đội ngũ HighShow</strong></p>
+    </div>
+    <div class="footer">
+      <p>© {{year}} HighShow. Không reply email này — đây là email tự động.</p>
+    </div>
+  </div>
+</body>
+</html>

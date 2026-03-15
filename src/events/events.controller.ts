@@ -26,6 +26,7 @@ import { Throttle } from '@nestjs/throttler';
 import { AddTicketTypeToEventDto } from './dto/add-ticket-type.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CancelEventRequestDto } from './dto/cancel-event-request.dto';
+import { SubmitChangeRequestDto } from './dto/submit-change-request.dto';
 
 @ApiTags('events')
 @ApiBearerAuth()
@@ -155,5 +156,22 @@ export class EventsController {
     @Request() req,
   ) {
     return this.eventService.cancelRequest(id, req.user.id, dto);
+  }
+
+  @Get(':id/stats')
+  @Roles(UserRole.ORGANIZER)
+  getEventStats(@Param('id') id: string, @Request() req) {
+    return this.eventService.getEventStats(id, req.user.id);
+  }
+
+  @Post(':id/change-request')
+  @Roles(UserRole.ORGANIZER)
+  @HttpCode(HttpStatus.CREATED)
+  submitChangeRequest(
+    @Param('id') id: string,
+    @Body() dto: SubmitChangeRequestDto,
+    @Request() req,
+  ) {
+    return this.eventService.submitChangeRequest(id, req.user.id, dto);
   }
 }

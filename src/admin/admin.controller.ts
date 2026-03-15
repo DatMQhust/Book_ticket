@@ -20,6 +20,7 @@ import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { ReviewKycDto } from './dto/review-kyc.dto';
 import { ReviewEventDto } from './dto/review-event.dto';
 import { ReviewCancelRequestDto } from './dto/review-cancel-request.dto';
+import { ReviewChangeRequestDto } from './dto/review-change-request.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('admin')
@@ -128,6 +129,24 @@ export class AdminController {
   @Get('organizers/:id/sepay-config')
   async getSepayConfig(@Param('id') organizerId: string) {
     return this.adminService.getSepayConfig(organizerId);
+  }
+
+  @Get('events/:id/change-requests')
+  async getChangeRequests(
+    @Param('id') eventId: string,
+    @Query('status') status?: string,
+  ) {
+    return this.adminService.getChangeRequests(eventId, status);
+  }
+
+  @Patch('events/:id/change-requests/:reqId/review')
+  @HttpCode(HttpStatus.OK)
+  async reviewChangeRequest(
+    @Param('id') eventId: string,
+    @Param('reqId') reqId: string,
+    @Body() dto: ReviewChangeRequestDto,
+  ) {
+    return this.adminService.reviewChangeRequest(eventId, reqId, dto);
   }
 
   @Get('organizers/:id/revenue')

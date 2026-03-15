@@ -9,12 +9,14 @@ import { Repository } from 'typeorm';
 import { TicketEntity, TicketStatus } from './entities/ticket.entity';
 import { TicketResponseDto } from './dto/ticket-response.dto';
 import { CheckInResponseDto } from './dto/check-in-response.dto';
+import { PaymentEventsGateway } from '../bookings/payment-events.gateway';
 
 @Injectable()
 export class TicketService {
   constructor(
     @InjectRepository(TicketEntity)
     private ticketRepository: Repository<TicketEntity>,
+    private readonly paymentEventsGateway: PaymentEventsGateway,
   ) {}
 
   findAll() {
@@ -156,6 +158,26 @@ export class TicketService {
     await this.ticketRepository.save(ticket);
 
     const event = ticket.ticketType.event || ticket.ticketType.session?.event;
+
+    // Emit stats update (fire-and-forget)
+    if (event?.id) {
+      this.ticketRepository
+        .count({
+          where: {
+            ticketType: { id: ticket.ticketType.id },
+            status: TicketStatus.CHECKED_IN,
+          },
+        })
+        .then((totalCheckedIn) => {
+          this.paymentEventsGateway.emitTicketCheckedIn(event.id, {
+            ticketTypeId: ticket.ticketType.id,
+            totalCheckedIn,
+          });
+        })
+        .catch(() => {
+          // non-critical — do not throw
+        });
+    }
 
     const response: CheckInResponseDto = {
       id: ticket.id,

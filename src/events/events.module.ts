@@ -9,8 +9,10 @@ import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { TicketTypeEntity } from 'src/ticket-type/entities/ticket-type.entity';
 import { MailModule } from 'src/mail/mail.module';
 import { EventCancelRequestEntity } from './entities/event-cancel-request.entity';
+import { EventChangeRequestEntity } from './entities/event-change-request.entity';
 import { BullModule } from '@nestjs/bull';
 import { BatchRefundProcessor } from './processors/batch-refund.processor';
+import { TicketEntity } from 'src/ticket/entities/ticket.entity';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { BatchRefundProcessor } from './processors/batch-refund.processor';
       OrganizerEntity,
       TicketTypeEntity,
       EventCancelRequestEntity,
+      EventChangeRequestEntity,
+      TicketEntity,
     ]),
     BullModule.registerQueue({ name: 'batch-refund' }),
     CloudinaryModule,

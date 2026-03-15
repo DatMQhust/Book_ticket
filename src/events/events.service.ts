@@ -28,6 +28,22 @@ import {
   EventCancelRequestEntity,
 } from './entities/event-cancel-request.entity';
 import { CancelEventRequestDto } from './dto/cancel-event-request.dto';
+import {
+  ChangeRequestStatus,
+  EventChangeRequestEntity,
+} from './entities/event-change-request.entity';
+import { SubmitChangeRequestDto } from './dto/submit-change-request.dto';
+import { TicketEntity, TicketStatus } from '../ticket/entities/ticket.entity';
+
+// Fields được phép sửa trực tiếp khi event đã Published (UPCOMING/ONGOING)
+const MINOR_EDITABLE_FIELDS = ['description'] as const;
+const LOCKED_FIELDS = [
+  'name',
+  'location',
+  'province',
+  'startSellDate',
+  'endSellDate',
+] as const;
 
 @Injectable()
 export class EventsService {
@@ -46,6 +62,12 @@ export class EventsService {
 
     @InjectRepository(EventCancelRequestEntity)
     private readonly cancelRequestRepository: Repository<EventCancelRequestEntity>,
+
+    @InjectRepository(EventChangeRequestEntity)
+    private readonly changeRequestRepository: Repository<EventChangeRequestEntity>,
+
+    @InjectRepository(TicketEntity)
+    private readonly ticketRepository: Repository<TicketEntity>,
 
     private readonly dataSource: DataSource,
 
@@ -489,12 +511,45 @@ export class EventsService {
       );
     }
 
+    // ── Minor edit mode: UPCOMING / ONGOING ──────────────────────────────────
+    if (
+      event.status === EventStatus.UPCOMING ||
+      event.status === EventStatus.ONGOING
+    ) {
+      const hasLockedField = LOCKED_FIELDS.some(
+        (field) => dto[field] !== undefined,
+      );
+      if (hasLockedField || dto.sessions || dto.ticketTypes) {
+        throw new BadRequestException(
+          'Only description and main image can be edited after publishing. Use change-request for core field changes.',
+        );
+      }
+
+      // Chỉ áp dụng các field được phép
+      MINOR_EDITABLE_FIELDS.forEach((field) => {
+        if (dto[field] !== undefined) {
+          (event as any)[field] = dto[field];
+        }
+      });
+
+      if (mainImage) {
+        const upload = await this.cloudinaryService.uploadImage(
+          mainImage,
+          'events/images',
+        );
+        event.imageUrl = upload.secure_url;
+      }
+
+      return this.eventRepository.save(event);
+    }
+
+    // ── Full edit mode: DRAFT / NEEDS_REVISION ───────────────────────────────
     if (
       event.status !== EventStatus.DRAFT &&
       event.status !== EventStatus.NEEDS_REVISION
     ) {
       throw new BadRequestException(
-        'Only DRAFT or NEEDS_REVISION events can be edited',
+        'Only DRAFT or NEEDS_REVISION events can be fully edited',
       );
     }
 
@@ -599,5 +654,148 @@ export class EventsService {
     });
 
     return this.cancelRequestRepository.save(cancelRequest);
+  }
+
+  // ─── Thống kê sự kiện ─────────────────────────────────────────────────────
+
+  async getEventStats(eventId: string, userId: string) {
+    const organizer = await this.organizerRepository.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!organizer) {
+      throw new NotFoundException('Organizer profile not found');
+    }
+
+    const event = await this.eventRepository.findOne({
+      where: { id: eventId, organizer: { id: organizer.id } },
+      relations: ['ticketTypes', 'sessions', 'sessions.ticketTypes'],
+    });
+    if (!event) {
+      throw new NotFoundException(
+        'Event not found or not owned by this organizer',
+      );
+    }
+
+    const rootTicketTypes = event.ticketTypes ?? [];
+    const sessionTicketTypes = (event.sessions ?? []).flatMap(
+      (s) => s.ticketTypes ?? [],
+    );
+    const allTicketTypes = [...rootTicketTypes, ...sessionTicketTypes];
+
+    // Count checked-in per ticketType via JOIN
+    let checkedInMap = new Map<string, number>();
+    if (allTicketTypes.length > 0) {
+      const checkedInCounts = await this.ticketRepository
+        .createQueryBuilder('ticket')
+        .leftJoin('ticket.ticketType', 'tt')
+        .select('tt.id', 'ticketTypeId')
+        .addSelect('COUNT(ticket.id)', 'count')
+        .where('tt.id IN (:...ids)', {
+          ids: allTicketTypes.map((tt) => tt.id),
+        })
+        .andWhere('ticket.status = :status', {
+          status: TicketStatus.CHECKED_IN,
+        })
+        .groupBy('tt.id')
+        .getRawMany();
+
+      checkedInMap = new Map(
+        checkedInCounts.map((r) => [r.ticketTypeId, parseInt(r.count, 10)]),
+      );
+    }
+
+    let totalRevenue = 0;
+    let totalTicketsSold = 0;
+    let totalCheckedIn = 0;
+
+    const byTicketType = allTicketTypes.map((tt) => {
+      const checkedIn = checkedInMap.get(tt.id) ?? 0;
+      totalRevenue += tt.price * tt.sold;
+      totalTicketsSold += tt.sold;
+      totalCheckedIn += checkedIn;
+      return {
+        ticketTypeId: tt.id,
+        name: tt.name,
+        price: tt.price,
+        totalQuantity: tt.quantity,
+        sold: tt.sold,
+        checkedIn,
+      };
+    });
+
+    const bySession =
+      event.sessions && event.sessions.length > 0
+        ? event.sessions.map((s) => {
+            const sessionCheckedIn = (s.ticketTypes ?? []).reduce(
+              (sum, tt) => sum + (checkedInMap.get(tt.id) ?? 0),
+              0,
+            );
+            return {
+              sessionId: s.id,
+              name: s.name,
+              startTime: s.startTime,
+              checkedIn: sessionCheckedIn,
+            };
+          })
+        : null;
+
+    return {
+      eventId: event.id,
+      totalRevenue,
+      totalTicketsSold,
+      totalCheckedIn,
+      byTicketType,
+      bySession,
+    };
+  }
+
+  // ─── Yêu cầu thay đổi thông tin ──────────────────────────────────────────
+
+  async submitChangeRequest(
+    eventId: string,
+    userId: string,
+    dto: SubmitChangeRequestDto,
+  ): Promise<EventChangeRequestEntity> {
+    const organizer = await this.organizerRepository.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!organizer) {
+      throw new NotFoundException('Organizer profile not found');
+    }
+
+    const event = await this.eventRepository.findOne({
+      where: { id: eventId, organizer: { id: organizer.id } },
+    });
+    if (!event) {
+      throw new NotFoundException(
+        'Event not found or not owned by this organizer',
+      );
+    }
+
+    if (
+      event.status !== EventStatus.UPCOMING &&
+      event.status !== EventStatus.ONGOING
+    ) {
+      throw new BadRequestException(
+        'Change requests can only be submitted for UPCOMING or ONGOING events',
+      );
+    }
+
+    const existing = await this.changeRequestRepository.findOne({
+      where: { event: { id: eventId }, status: ChangeRequestStatus.PENDING },
+    });
+    if (existing) {
+      throw new BadRequestException(
+        'A change request is already pending for this event',
+      );
+    }
+
+    const changeRequest = this.changeRequestRepository.create({
+      event,
+      requestedChanges: dto.requestedChanges,
+      reason: dto.reason,
+    });
+
+    return this.changeRequestRepository.save(changeRequest);
   }
 }

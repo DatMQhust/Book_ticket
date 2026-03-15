@@ -10,6 +10,7 @@ import { OrderEntity } from '../order/entities/order.entity';
 import { OrganizationPaymentConfigEntity } from '../organizers/entities/payment-config.entity';
 import { MailModule } from '../mail/mail.module';
 import { EventCancelRequestEntity } from '../events/entities/event-cancel-request.entity';
+import { EventChangeRequestEntity } from '../events/entities/event-change-request.entity';
 import { EventSessionEntity } from '../event-session/entities/event-session.entity';
 
 @Module({
@@ -22,6 +23,7 @@ import { EventSessionEntity } from '../event-session/entities/event-session.enti
       OrderEntity,
       OrganizationPaymentConfigEntity,
       EventCancelRequestEntity,
+      EventChangeRequestEntity,
     ]),
     BullModule.registerQueue({ name: 'batch-refund' }),
     MailModule,

@@ -295,6 +295,31 @@ export class MailService {
     });
   }
 
+  // ─── Thay đổi thông tin sự kiện ──────────────────────────────────────────
+
+  /**
+   * Gửi email thông báo thay đổi thông tin sự kiện tới buyers
+   */
+  async sendEventInfoUpdated(payload: {
+    to: string;
+    userName: string;
+    eventName: string;
+    changes: { field: string; from: any; to: any }[];
+  }): Promise<void> {
+    await this.mailerService.sendMail({
+      to: payload.to,
+      subject: `[HighShow] Thông tin sự kiện "${payload.eventName}" đã được cập nhật`,
+      template: 'event-info-updated',
+      context: {
+        userName: payload.userName,
+        eventName: payload.eventName,
+        changes: payload.changes,
+        supportEmail: process.env.MAIL_FROM,
+        year: new Date().getFullYear(),
+      },
+    });
+  }
+
   // ─── Collaborator (CTV) ──────────────────────────────────────────────────
 
   /**

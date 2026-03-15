@@ -26,6 +26,14 @@ import {
   ReviewCancelDecision,
   ReviewCancelRequestDto,
 } from './dto/review-cancel-request.dto';
+import {
+  ChangeRequestStatus,
+  EventChangeRequestEntity,
+} from '../events/entities/event-change-request.entity';
+import {
+  ReviewChangeDecision,
+  ReviewChangeRequestDto,
+} from './dto/review-change-request.dto';
 
 @Injectable()
 export class AdminService {
@@ -42,6 +50,8 @@ export class AdminService {
     private readonly paymentConfigRepository: Repository<OrganizationPaymentConfigEntity>,
     @InjectRepository(EventCancelRequestEntity)
     private readonly cancelRequestRepository: Repository<EventCancelRequestEntity>,
+    @InjectRepository(EventChangeRequestEntity)
+    private readonly changeRequestRepository: Repository<EventChangeRequestEntity>,
     @InjectQueue('batch-refund')
     private readonly batchRefundQueue: Queue,
     private readonly mailService: MailService,
@@ -494,6 +504,98 @@ export class AdminService {
       });
 
       return { message: 'Cancel request rejected.' };
+    }
+  }
+
+  // ─── Yêu cầu thay đổi thông tin ──────────────────────────────────────────
+
+  async getChangeRequests(eventId: string, status?: string) {
+    const where: any = { event: { id: eventId } };
+    if (status) where.status = status as ChangeRequestStatus;
+
+    return this.changeRequestRepository.find({
+      where,
+      relations: ['event'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async reviewChangeRequest(
+    eventId: string,
+    reqId: string,
+    dto: ReviewChangeRequestDto,
+  ): Promise<{ message: string }> {
+    const changeRequest = await this.changeRequestRepository.findOne({
+      where: { id: reqId, event: { id: eventId } },
+      relations: ['event', 'event.organizer', 'event.organizer.user'],
+    });
+
+    if (!changeRequest) {
+      throw new NotFoundException(`Change request ${reqId} not found`);
+    }
+
+    if (changeRequest.status !== ChangeRequestStatus.PENDING) {
+      throw new BadRequestException('Change request is not in PENDING status');
+    }
+
+    changeRequest.adminNotes = dto.adminNotes ?? null;
+
+    if (dto.decision === ReviewChangeDecision.APPROVED) {
+      changeRequest.status = ChangeRequestStatus.APPROVED;
+      await this.changeRequestRepository.save(changeRequest);
+
+      // Áp dụng các thay đổi vào EventEntity
+      const updatePayload: Partial<EventEntity> = {};
+      for (const [key, value] of Object.entries(
+        changeRequest.requestedChanges,
+      )) {
+        (updatePayload as any)[key] = value.to;
+      }
+      await this.eventRepository.update(eventId, updatePayload);
+
+      // Nếu thay đổi location/dates → email buyers
+      const notifyFields = ['location', 'startSellDate', 'endSellDate'];
+      const needsNotification = notifyFields.some(
+        (f) => changeRequest.requestedChanges[f] !== undefined,
+      );
+
+      if (needsNotification) {
+        const orders = await this.orderRepository
+          .createQueryBuilder('order')
+          .innerJoinAndSelect('order.user', 'user')
+          .innerJoin('order.tickets', 'ticket')
+          .innerJoin('ticket.ticketType', 'tt')
+          .leftJoin('tt.event', 'directEvent')
+          .leftJoin('tt.session', 'session')
+          .leftJoin('session.event', 'sessionEvent')
+          .where('order.status = :status', { status: 'completed' })
+          .andWhere(
+            '(directEvent.id = :eventId OR sessionEvent.id = :eventId)',
+            { eventId },
+          )
+          .select(['order.id', 'user.email', 'user.name'])
+          .distinct(true)
+          .getMany();
+
+        const changes = Object.entries(changeRequest.requestedChanges).map(
+          ([field, val]) => ({ field, from: val.from, to: val.to }),
+        );
+
+        for (const order of orders) {
+          await this.mailService.sendEventInfoUpdated({
+            to: order.user.email,
+            userName: order.user.name,
+            eventName: changeRequest.event.name,
+            changes,
+          });
+        }
+      }
+
+      return { message: 'Change request approved and applied' };
+    } else {
+      changeRequest.status = ChangeRequestStatus.REJECTED;
+      await this.changeRequestRepository.save(changeRequest);
+      return { message: 'Change request rejected' };
     }
   }
 
