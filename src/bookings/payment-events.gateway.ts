@@ -107,6 +107,18 @@ export class PaymentEventsGateway
     return { success: true, message: 'Unsubscribed from order updates' };
   }
 
+  @SubscribeMessage('subscribe-event')
+  handleSubscribeEvent(client: Socket, eventId: string) {
+    client.join(`event:${eventId}`);
+    return { success: true, message: `Subscribed to event:${eventId}` };
+  }
+
+  @SubscribeMessage('unsubscribe-event')
+  handleUnsubscribeEvent(client: Socket, eventId: string) {
+    client.leave(`event:${eventId}`);
+    return { success: true, message: `Unsubscribed from event:${eventId}` };
+  }
+
   @SubscribeMessage('join-event-stats')
   handleJoinEventStats(client: Socket, eventId: string) {
     client.join(`event-stats:${eventId}`);

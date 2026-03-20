@@ -34,7 +34,6 @@ import {
 } from './entities/event-change-request.entity';
 import { SubmitChangeRequestDto } from './dto/submit-change-request.dto';
 import { TicketEntity, TicketStatus } from '../ticket/entities/ticket.entity';
-
 // Fields được phép sửa trực tiếp khi event đã Published (UPCOMING/ONGOING)
 const MINOR_EDITABLE_FIELDS = ['description'] as const;
 const LOCKED_FIELDS = [
@@ -265,15 +264,19 @@ export class EventsService {
 
     const skip = (page - 1) * limit;
 
+    const PUBLIC_STATUSES = [
+      EventStatus.UPCOMING,
+      EventStatus.ONGOING,
+      EventStatus.ENDED,
+    ];
+
     const where: any = {};
 
     if (eventType) {
       where.eventType = eventType;
     }
 
-    if (status) {
-      where.status = status;
-    }
+    where.status = status ? status : In(PUBLIC_STATUSES);
 
     if (province) {
       where.province = ILike(`%${province}%`);
