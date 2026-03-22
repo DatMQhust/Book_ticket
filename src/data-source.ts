@@ -21,6 +21,7 @@ import { OrganizationPaymentConfigEntity } from './organizers/entities/payment-c
 import { EventChangeRequestEntity } from './events/entities/event-change-request.entity';
 import { EventCancelRequestEntity } from './events/entities/event-cancel-request.entity';
 import { CollaboratorEntity } from './collaborators/entities/collaborator.entity';
+import { SeatMapEntity } from './seat-map/entities/seat-map.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -42,6 +43,7 @@ export const AppDataSource = new DataSource({
     EventChangeRequestEntity,
     EventCancelRequestEntity,
     CollaboratorEntity,
+    SeatMapEntity,
   ],
   migrations: ['src/migrations/**/*.ts'],
   migrationsTableName: 'migrations',

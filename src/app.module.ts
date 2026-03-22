@@ -23,6 +23,7 @@ import { BullModule } from '@nestjs/bull';
 import { AdminModule } from './admin/admin.module';
 import { MailModule } from './mail/mail.module';
 import { CollaboratorsModule } from './collaborators/collaborators.module';
+import { SeatMapModule } from './seat-map/seat-map.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { CollaboratorsModule } from './collaborators/collaborators.module';
     AdminModule,
     MailModule,
     CollaboratorsModule,
+    SeatMapModule,
   ],
   controllers: [AppController],
   providers: [
