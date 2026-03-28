@@ -448,6 +448,7 @@ export class EventsService {
       relations: [
         'sessions',
         'organizer',
+        'organizer.user',
         'sessions.ticketTypes',
         'ticketTypes',
       ],

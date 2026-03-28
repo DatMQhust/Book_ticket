@@ -17,7 +17,8 @@ import { UpdateOrganizerDto } from './dto/update-organizer.dto';
 import { UpdateEventDto } from '../events/dto/update-event.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { User } from '../auth/decorators/auth.decorator';
+import { Roles, User } from '../auth/decorators/auth.decorator';
+import { UserRole } from '../users/entities/user.entity';
 
 @ApiTags('organizers')
 @ApiBearerAuth()
@@ -37,8 +38,9 @@ export class OrganizersController {
     return this.organizersService.getMyProfile(user.id);
   }
 
-  // Legacy create endpoint - might be used by admin so we keep it but it should probably map to internal creation.
+  // Legacy create endpoint - only admin can create organizers directly.
   @Post()
+  @Roles(UserRole.ADMIN)
   create(@Body() createOrganizerDto: CreateOrganizerDto) {
     return this.organizersService.createAndAssignRole(createOrganizerDto);
   }
@@ -54,6 +56,7 @@ export class OrganizersController {
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN)
   update(
     @Param('id') id: string,
     @Body() updateOrganizerDto: UpdateOrganizerDto,
@@ -62,6 +65,7 @@ export class OrganizersController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {
     return this.organizersService.remove(id);
@@ -77,6 +81,7 @@ export class OrganizersController {
   }
 
   @Get(':id/revenue')
+  @Roles(UserRole.ADMIN)
   getRevenue(@Param('id') id: string) {
     return this.organizersService.getOrganizerRevenue(id);
   }

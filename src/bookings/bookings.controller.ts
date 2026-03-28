@@ -2,7 +2,8 @@ import { Controller, Post, Body, Request, Headers } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { BookingsService } from './bookings.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
-import { Public } from 'src/auth/decorators/auth.decorator';
+import { Public, Roles } from 'src/auth/decorators/auth.decorator';
+import { UserRole } from 'src/users/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
 
 @ApiTags('bookings')
@@ -15,6 +16,7 @@ export class BookingsController {
   ) {}
 
   @Post('reserve')
+  @Roles(UserRole.USER)
   async reserve(@Request() req, @Body() dto: CreateReservationDto) {
     let userId = req.user?.id;
 
@@ -36,6 +38,7 @@ export class BookingsController {
   }
 
   @Post('initiate-payment')
+  @Roles(UserRole.USER)
   async initiatePayment(
     @Request() req,
     @Body() body: { ticketTypeId: string },

@@ -13,6 +13,7 @@ import { OrderModule } from './order/order.module';
 import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { RolesGuard } from './auth/guards/role.guard';
 import { TicketTypeModule } from './ticket-type/ticket-type.module';
 import { EventSessionModule } from './event-session/event-session.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
@@ -80,6 +81,10 @@ import { SeatMapModule } from './seat-map/seat-map.module';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ],
 })
