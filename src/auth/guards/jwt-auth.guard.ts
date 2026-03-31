@@ -1,6 +1,7 @@
 import {
   ExecutionContext,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -10,6 +11,13 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
+  private readonly logger = new Logger(JwtAuthGuard.name);
+  private readonly LOAD_TEST_ALLOWED_IPS = [
+    '127.0.0.1',
+    '::1',
+    '::ffff:127.0.0.1',
+  ];
+
   constructor(
     private reflector: Reflector,
     private configService: ConfigService,
@@ -21,13 +29,23 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const request = context.switchToHttp().getRequest();
     const serverSecret = this.configService.get<string>('LOAD_TEST_SECRET');
     const requestSecret = request.headers['x-load-test-secret'];
+
     if (serverSecret && serverSecret === requestSecret) {
-      const mockUserId = request.headers['x-mock-user-id'];
-      request.user = {
-        id: mockUserId || 'load-test-user',
-        role: 'user',
-      };
-      return true;
+      const requestIp =
+        request.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+        request.socket?.remoteAddress;
+
+      if (!this.LOAD_TEST_ALLOWED_IPS.includes(requestIp)) {
+        this.logger.warn(`Load test bypass bị từ chối từ IP: ${requestIp}`);
+        // fallthrough sang JWT validation bình thường
+      } else {
+        const mockUserId = request.headers['x-mock-user-id'];
+        request.user = {
+          id: mockUserId || 'load-test-user',
+          role: 'user',
+        };
+        return true;
+      }
     }
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),

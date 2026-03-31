@@ -1,4 +1,5 @@
 import { Controller, Post, Body, Request, Headers } from '@nestjs/common';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { BookingsService } from './bookings.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
@@ -17,6 +18,10 @@ export class BookingsController {
 
   @Post('reserve')
   @Roles(UserRole.USER)
+  @Throttle({
+    strict: { limit: 5, ttl: 60_000 },
+    burst: { limit: 1, ttl: 2_000 },
+  })
   async reserve(@Request() req, @Body() dto: CreateReservationDto) {
     let userId = req.user?.id;
 
@@ -49,6 +54,8 @@ export class BookingsController {
 
   @Post('webhook')
   @Public()
+  @SkipThrottle({ strict: true, burst: true })
+  @Throttle({ global: { limit: 200, ttl: 60_000 } }) // 200 req/phút/IP cho payment gateway
   async handleWebhook(
     @Body() body: any,
     @Headers('authorization') authHeader: string,

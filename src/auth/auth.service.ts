@@ -1,4 +1,9 @@
-import { HttpException, Injectable, Res } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { Response } from 'express';
@@ -6,6 +11,8 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { ConfigService } from '@nestjs/config';
 import { UserDto } from 'src/users/dto/user.dto';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
 
 @Injectable()
 export class AuthService {
@@ -13,20 +20,40 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
+  async validateUser(email: string, password: string, req?: any): Promise<any> {
+    const attemptsKey = req?._loginAttemptsKey;
+    const lockKey = req?._loginLockKey;
+    const maxAttempts = req?._loginMaxAttempts;
+    const lockoutTtl = req?._loginLockoutTtl;
+    const windowTtl = req?._loginWindowTtl;
+
     const user = await this.usersService.getUserWithPasswordField(email);
-    if (user) {
-      const isValidPassword = this.usersService.isValidPassword(
-        password,
-        user.password,
-      );
-      if (isValidPassword) {
-        return user;
+    const isValidPassword =
+      user && this.usersService.isValidPassword(password, user.password);
+
+    if (!user || !isValidPassword) {
+      if (attemptsKey) {
+        const attempts = await this.redis.incr(attemptsKey);
+        await this.redis.expire(attemptsKey, windowTtl);
+
+        if (attempts >= maxAttempts) {
+          await this.redis.setex(lockKey, lockoutTtl, '1');
+          throw new UnauthorizedException(
+            'Đăng nhập sai quá nhiều lần. Tài khoản bị khoá 15 phút.',
+          );
+        }
+        throw new UnauthorizedException(
+          `Sai email hoặc mật khẩu. Còn ${maxAttempts - attempts} lần thử.`,
+        );
       }
+      throw new UnauthorizedException('Sai email hoặc mật khẩu.');
     }
-    return null;
+
+    if (attemptsKey) await this.redis.del(attemptsKey); // reset khi login thành công
+    return user;
   }
   async register(register: RegisterDto, res: Response) {
     const { email, name, phone, password } = register;

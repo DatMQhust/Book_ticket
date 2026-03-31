@@ -18,6 +18,7 @@ import { TicketTypeModule } from './ticket-type/ticket-type.module';
 import { EventSessionModule } from './event-session/event-session.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
 import { BookingsModule } from './bookings/bookings.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { BullModule } from '@nestjs/bull';
@@ -30,8 +31,19 @@ import { SeatMapModule } from './seat-map/seat-map.module';
   imports: [
     ThrottlerModule.forRoot([
       {
-        ttl: 60000,
+        name: 'global',
+        ttl: 60_000,
+        limit: 60, // 60 req/phút — thoải mái cho user thực
+      },
+      {
+        name: 'strict', // dùng riêng cho auth và booking
+        ttl: 60_000,
         limit: 10,
+      },
+      {
+        name: 'burst', // chặn spam trong vòng 1 giây
+        ttl: 1_000,
+        limit: 3,
       },
     ]),
     ConfigModule.forRoot({
@@ -81,6 +93,10 @@ import { SeatMapModule } from './seat-map/seat-map.module';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: CustomThrottlerGuard,
     },
     {
       provide: APP_GUARD,

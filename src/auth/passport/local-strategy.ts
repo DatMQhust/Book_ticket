@@ -9,13 +9,14 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     super({
       usernameField: 'email',
       passwordField: 'password',
+      passReqToCallback: true,
     });
   }
 
-  async validate(email: string, password: string): Promise<any> {
+  async validate(req: any, email: string, password: string): Promise<any> {
     if (password === '')
       throw new UnauthorizedException('Lỗi xác thực người dùng');
-    const user = await this.authService.validateUser(email, password);
+    const user = await this.authService.validateUser(email, password, req);
     if (!user) {
       throw new UnauthorizedException('Lỗi xác thực người dùng');
     }

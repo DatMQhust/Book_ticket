@@ -9,12 +9,14 @@ import {
 } from '@nestjs/common';
 import { Public } from './decorators/auth.decorator';
 import { LocalAuthGuard } from './guards/local-auth.guard';
+import { LoginAttemptGuard } from './guards/login-attempt.guard';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { Response } from 'express';
 import { GoogleAuthGuard } from './guards/google-auth/google-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -25,6 +27,7 @@ export class AuthController {
   ) {}
 
   @Public()
+  @Throttle({ strict: { limit: 3, ttl: 3_600_000 } }) // 3 lần/giờ/IP
   @Post('register')
   async register(@Body() body: RegisterDto, @Res() res: Response) {
     const registerReult = await this.authService.register(body, res);
@@ -32,7 +35,8 @@ export class AuthController {
   }
 
   @Public()
-  @UseGuards(LocalAuthGuard)
+  @UseGuards(LoginAttemptGuard, LocalAuthGuard)
+  @Throttle({ strict: { limit: 5, ttl: 300_000 } }) // 5 lần/5 phút/IP
   @Post('login')
   async login(@Req() req, @Res({ passthrough: true }) res: Response) {
     return await this.authService.login(req.user, res);
