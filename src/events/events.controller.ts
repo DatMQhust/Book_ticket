@@ -27,6 +27,7 @@ import { AddTicketTypeToEventDto } from './dto/add-ticket-type.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CancelEventRequestDto } from './dto/cancel-event-request.dto';
 import { SubmitChangeRequestDto } from './dto/submit-change-request.dto';
+import { ConfigureWaitingRoomDto } from '../waiting-room/dto/configure-waiting-room.dto';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 import { randomUUID } from 'crypto';
@@ -205,5 +206,25 @@ export class EventsController {
     @Request() req,
   ) {
     return this.eventService.submitChangeRequest(id, req.user.id, dto);
+  }
+
+  // ─── Waiting Room ──────────────────────────────────────────────────────────
+
+  @Post(':id/waiting-room')
+  @Roles(UserRole.ORGANIZER)
+  @HttpCode(HttpStatus.OK)
+  async configureWaitingRoom(
+    @Param('id') eventId: string,
+    @Body() dto: ConfigureWaitingRoomDto,
+    @Request() req,
+  ) {
+    await this.eventService.configureWaitingRoom(eventId, req.user.id, dto);
+    return { message: 'Cấu hình hàng chờ thành công' };
+  }
+
+  @Get(':id/waiting-room/status')
+  @Roles(UserRole.ORGANIZER)
+  getWaitingRoomStatus(@Param('id') eventId: string, @Request() req) {
+    return this.eventService.getWaitingRoomStatus(eventId, req.user.id);
   }
 }

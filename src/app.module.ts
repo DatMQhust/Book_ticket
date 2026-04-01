@@ -27,6 +27,7 @@ import { MailModule } from './mail/mail.module';
 import { CollaboratorsModule } from './collaborators/collaborators.module';
 import { SeatMapModule } from './seat-map/seat-map.module';
 import { AppRabbitMQModule } from './rabbitmq/rabbitmq.module';
+import { WaitingRoomModule } from './waiting-room/waiting-room.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { AppRabbitMQModule } from './rabbitmq/rabbitmq.module';
       },
     }),
     AppRabbitMQModule,
+    WaitingRoomModule,
     UsersModule,
     DatabaseModule,
     TestModule,

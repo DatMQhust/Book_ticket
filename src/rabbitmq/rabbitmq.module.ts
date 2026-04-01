@@ -23,6 +23,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         channels: {
           default: { prefetchCount: 10, default: true },
           'high-priority': { prefetchCount: 20 },
+          'wr-slot': { prefetchCount: 50 },
         },
       }),
       inject: [ConfigService],

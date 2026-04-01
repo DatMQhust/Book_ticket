@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -34,6 +35,8 @@ import {
 } from './entities/event-change-request.entity';
 import { SubmitChangeRequestDto } from './dto/submit-change-request.dto';
 import { TicketEntity, TicketStatus } from '../ticket/entities/ticket.entity';
+import { WaitingRoomService } from '../waiting-room/waiting-room.service';
+import { ConfigureWaitingRoomDto } from '../waiting-room/dto/configure-waiting-room.dto';
 // Fields được phép sửa trực tiếp khi event đã Published (UPCOMING/ONGOING)
 const MINOR_EDITABLE_FIELDS = ['description'] as const;
 const LOCKED_FIELDS = [
@@ -73,6 +76,8 @@ export class EventsService {
     private readonly cloudinaryService: CloudinaryService,
 
     private readonly mailService: MailService,
+
+    private readonly waitingRoomService: WaitingRoomService,
   ) {}
 
   async createEvent(
@@ -835,5 +840,53 @@ export class EventsService {
     });
 
     return this.changeRequestRepository.save(changeRequest);
+  }
+
+  // ─── Waiting Room ──────────────────────────────────────────────────────────
+
+  async configureWaitingRoom(
+    eventId: string,
+    userId: string,
+    dto: ConfigureWaitingRoomDto,
+  ): Promise<void> {
+    const event = await this.eventRepository.findOne({
+      where: { id: eventId },
+      relations: ['organizer', 'organizer.user'],
+      select: {
+        id: true,
+        organizer: { user: { id: true } },
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Không tìm thấy sự kiện.');
+    }
+    if (event.organizer.user.id !== userId) {
+      throw new ForbiddenException('Bạn không có quyền cấu hình sự kiện này.');
+    }
+
+    await this.waitingRoomService.configureRoom(eventId, dto);
+  }
+
+  async getWaitingRoomStatus(eventId: string, userId: string) {
+    const event = await this.eventRepository.findOne({
+      where: { id: eventId },
+      relations: ['organizer', 'organizer.user'],
+      select: {
+        id: true,
+        organizer: { user: { id: true } },
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Không tìm thấy sự kiện.');
+    }
+    if (event.organizer.user.id !== userId) {
+      throw new ForbiddenException(
+        'Bạn không có quyền xem thông tin sự kiện này.',
+      );
+    }
+
+    return this.waitingRoomService.getRoomStatus(eventId);
   }
 }

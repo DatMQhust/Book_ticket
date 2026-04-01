@@ -5,6 +5,9 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity, UserRole } from '../users/entities/user.entity';
@@ -34,6 +37,8 @@ import {
   ReviewChangeDecision,
   ReviewChangeRequestDto,
 } from './dto/review-change-request.dto';
+import { WaitingRoomService } from '../waiting-room/waiting-room.service';
+import { ConfigureWaitingRoomDto } from '../waiting-room/dto/configure-waiting-room.dto';
 
 @Injectable()
 export class AdminService {
@@ -55,6 +60,9 @@ export class AdminService {
     @InjectQueue('batch-refund')
     private readonly batchRefundQueue: Queue,
     private readonly mailService: MailService,
+    private readonly waitingRoomService: WaitingRoomService,
+    private readonly httpService: HttpService,
+    private readonly amqpConnection: AmqpConnection,
   ) {}
 
   async getAllUsers(page: number = 1, limit: number = 10) {
@@ -597,6 +605,104 @@ export class AdminService {
       await this.changeRequestRepository.save(changeRequest);
       return { message: 'Change request rejected' };
     }
+  }
+
+  // ─── Waiting Room ─────────────────────────────────────────────────────────
+
+  async configureEventWaitingRoom(
+    eventId: string,
+    dto: ConfigureWaitingRoomDto,
+  ): Promise<void> {
+    await this.waitingRoomService.configureRoom(eventId, dto);
+  }
+
+  async getEventWaitingRoomStatus(eventId: string) {
+    return this.waitingRoomService.getRoomStatus(eventId);
+  }
+
+  async disableEventWaitingRoom(eventId: string): Promise<void> {
+    await this.waitingRoomService.configureRoom(eventId, {
+      enabled: false,
+      maxConcurrent: 1,
+    });
+  }
+
+  // ─── DLQ Monitoring ───────────────────────────────────────────────────────
+
+  async getDlqStats() {
+    const managementUrl =
+      process.env.RABBITMQ_MANAGEMENT_URL ?? 'http://dat:dat@localhost:15672';
+    const queues = ['dlq.waiting-room', 'dlq.booking'];
+
+    return Promise.all(
+      queues.map(async (queue) => {
+        try {
+          const { data } = await firstValueFrom(
+            this.httpService.get(
+              `${managementUrl}/api/queues/%2F/${encodeURIComponent(queue)}`,
+            ),
+          );
+          return {
+            queue,
+            messages: data.messages ?? 0,
+            messages_ready: data.messages_ready ?? 0,
+          };
+        } catch {
+          return {
+            queue,
+            messages: 0,
+            messages_ready: 0,
+            error: 'Không thể truy vấn DLQ',
+          };
+        }
+      }),
+    );
+  }
+
+  async requeueDlq(queue: string): Promise<{ requeued: number }> {
+    const allowedQueues = ['dlq.waiting-room', 'dlq.booking'];
+    if (!allowedQueues.includes(queue)) {
+      throw new BadRequestException(
+        `Queue không hợp lệ. Chỉ cho phép: ${allowedQueues.join(', ')}`,
+      );
+    }
+
+    const managementUrl =
+      process.env.RABBITMQ_MANAGEMENT_URL ?? 'http://dat:dat@localhost:15672';
+    const encodedQueue = encodeURIComponent(queue);
+
+    const { data: queueInfo } = await firstValueFrom(
+      this.httpService.get(`${managementUrl}/api/queues/%2F/${encodedQueue}`),
+    );
+
+    const count = queueInfo.messages_ready ?? 0;
+    if (count === 0) return { requeued: 0 };
+
+    const { data: messages } = await firstValueFrom(
+      this.httpService.post(
+        `${managementUrl}/api/queues/%2F/${encodedQueue}/get`,
+        {
+          count,
+          ackmode: 'ack_requeue_false',
+          encoding: 'auto',
+          truncate: 50000,
+        },
+      ),
+    );
+
+    const exchangeMap: Record<string, string> = {
+      'dlq.waiting-room': 'waiting-room-exchange',
+      'dlq.booking': 'booking-exchange',
+    };
+    const exchange = exchangeMap[queue];
+
+    for (const msg of messages) {
+      const routingKey: string = msg.routing_key ?? '';
+      const payload = msg.payload ? JSON.parse(msg.payload) : {};
+      this.amqpConnection.publish(exchange, routingKey, payload);
+    }
+
+    return { requeued: messages.length };
   }
 
   async reviewKycApplication(

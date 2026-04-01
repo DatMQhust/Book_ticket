@@ -13,6 +13,7 @@ import { EventChangeRequestEntity } from './entities/event-change-request.entity
 import { BullModule } from '@nestjs/bull';
 import { BatchRefundProcessor } from './processors/batch-refund.processor';
 import { TicketEntity } from 'src/ticket/entities/ticket.entity';
+import { WaitingRoomModule } from 'src/waiting-room/waiting-room.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { TicketEntity } from 'src/ticket/entities/ticket.entity';
     BullModule.registerQueue({ name: 'batch-refund' }),
     CloudinaryModule,
     MailModule,
+    WaitingRoomModule,
   ],
   controllers: [EventsController],
   providers: [EventsService, BatchRefundProcessor],

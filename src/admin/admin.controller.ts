@@ -3,6 +3,7 @@ import {
   Get,
   Patch,
   Post,
+  Delete,
   Body,
   Param,
   Query,
@@ -21,6 +22,7 @@ import { ReviewKycDto } from './dto/review-kyc.dto';
 import { ReviewEventDto } from './dto/review-event.dto';
 import { ReviewCancelRequestDto } from './dto/review-cancel-request.dto';
 import { ReviewChangeRequestDto } from './dto/review-change-request.dto';
+import { ConfigureWaitingRoomDto } from '../waiting-room/dto/configure-waiting-room.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('admin')
@@ -147,6 +149,43 @@ export class AdminController {
     @Body() dto: ReviewChangeRequestDto,
   ) {
     return this.adminService.reviewChangeRequest(eventId, reqId, dto);
+  }
+
+  // ─── Waiting Room ─────────────────────────────────────────────────────────
+
+  @Post('events/:id/waiting-room')
+  @HttpCode(HttpStatus.OK)
+  async configureEventWaitingRoom(
+    @Param('id') eventId: string,
+    @Body() dto: ConfigureWaitingRoomDto,
+  ) {
+    await this.adminService.configureEventWaitingRoom(eventId, dto);
+    return { message: 'Cấu hình hàng chờ thành công' };
+  }
+
+  @Get('events/:id/waiting-room/status')
+  async getEventWaitingRoomStatus(@Param('id') eventId: string) {
+    return this.adminService.getEventWaitingRoomStatus(eventId);
+  }
+
+  @Delete('events/:id/waiting-room')
+  @HttpCode(HttpStatus.OK)
+  async disableEventWaitingRoom(@Param('id') eventId: string) {
+    await this.adminService.disableEventWaitingRoom(eventId);
+    return { message: 'Đã tắt hàng chờ và xoá queue' };
+  }
+
+  // ─── DLQ Monitoring ───────────────────────────────────────────────────────
+
+  @Get('dlq/stats')
+  async getDlqStats() {
+    return this.adminService.getDlqStats();
+  }
+
+  @Post('dlq/requeue/:queue')
+  @HttpCode(HttpStatus.OK)
+  async requeueDlq(@Param('queue') queue: string) {
+    return this.adminService.requeueDlq(queue);
   }
 
   @Get('organizers/:id/revenue')
