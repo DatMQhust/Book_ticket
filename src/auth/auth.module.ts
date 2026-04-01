@@ -9,6 +9,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './passport/jwt-strategy';
 import googleOauthConfig from 'src/config/google-oauth.config';
 import { GoogleStrategy } from './passport/google-strategy';
+import { CommonModule } from 'src/common/common.module';
 @Module({
   imports: [
     UsersModule,
@@ -23,6 +24,7 @@ import { GoogleStrategy } from './passport/google-strategy';
       }),
     }),
     ConfigModule.forFeature(googleOauthConfig),
+    CommonModule,
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy],
   exports: [AuthService],

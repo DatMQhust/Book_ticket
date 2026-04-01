@@ -50,6 +50,14 @@ export class BookingsService implements OnModuleInit {
   }
 
   async reserveTicket(userId: string, ticketTypeId: string, quantity: number) {
+    // B3: Giới hạn số reservation đang giữ đồng thời của 1 user
+    const activeReservations = await this.redis.keys(`reservation:${userId}:*`);
+    if (activeReservations.length >= 3) {
+      throw new BadRequestException(
+        'Bạn đang giữ vé cho 3 sự kiện. Vui lòng hoàn tất thanh toán trước khi đặt thêm.',
+      );
+    }
+
     const stockKey = `ticket_stock:${ticketTypeId}`;
     const reservationKey = `reservation:${userId}:${ticketTypeId}`;
 

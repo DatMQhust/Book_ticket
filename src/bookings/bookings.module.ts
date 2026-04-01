@@ -11,6 +11,7 @@ import { TicketEntity } from 'src/ticket/entities/ticket.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { PaymentEventsGateway } from './payment-events.gateway';
 import { JwtModule } from '@nestjs/jwt';
+import { CommonModule } from 'src/common/common.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { JwtModule } from '@nestjs/jwt';
     BullModule.registerQueue({
       name: 'booking-queue',
     }),
+    CommonModule,
   ],
   controllers: [BookingsController],
   providers: [BookingsService, BookingProcessor, PaymentEventsGateway],

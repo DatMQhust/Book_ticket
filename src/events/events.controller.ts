@@ -27,12 +27,18 @@ import { AddTicketTypeToEventDto } from './dto/add-ticket-type.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CancelEventRequestDto } from './dto/cancel-event-request.dto';
 import { SubmitChangeRequestDto } from './dto/submit-change-request.dto';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
+import { randomUUID } from 'crypto';
 
 @ApiTags('events')
 @ApiBearerAuth()
 @Controller('events')
 export class EventsController {
-  constructor(private readonly eventService: EventsService) {}
+  constructor(
+    private readonly eventService: EventsService,
+    @InjectRedis() private readonly redis: Redis,
+  ) {}
 
   @Get('organizer/my')
   @Roles(UserRole.ORGANIZER)
@@ -100,6 +106,18 @@ export class EventsController {
         eventInsurance: files.eventInsurance?.[0],
       },
     );
+  }
+
+  @Get(':id/nonce')
+  async getBookingNonce(@Param('id') eventId: string, @Request() req) {
+    const userId = req.user?.id;
+    const nonce = randomUUID();
+    await this.redis.setex(
+      `booking_nonce:${nonce}`,
+      300,
+      `${userId}:${eventId}`,
+    );
+    return { nonce };
   }
 
   @Get(':id')

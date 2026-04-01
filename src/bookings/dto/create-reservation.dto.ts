@@ -9,4 +9,8 @@ export class CreateReservationDto {
   @Min(1)
   @Max(10)
   quantity: number;
+
+  @IsString()
+  @IsNotEmpty()
+  turnstileToken: string;
 }

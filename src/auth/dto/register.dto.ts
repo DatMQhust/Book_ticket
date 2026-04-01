@@ -15,4 +15,8 @@ export class RegisterDto {
 
   @IsNotEmpty()
   password: string;
+
+  @IsString()
+  @IsNotEmpty()
+  turnstileToken: string;
 }
