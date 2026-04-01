@@ -17,8 +17,27 @@ services:
     networks:
       - backend
 
+  rabbitmq:
+    build:
+      context: ./rabbitmq
+      dockerfile: Dockerfile
+    container_name: rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: dat
+      RABBITMQ_DEFAULT_PASS: dat
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins
+    networks:
+      - backend
+
 volumes:
   postgres_data:   # volume để data không bị mất khi xoá container
+  rabbitmq_data:   # volume để data RabbitMQ không bị mất khi xoá container
 
 networks:
   backend:

@@ -26,6 +26,7 @@ import { AdminModule } from './admin/admin.module';
 import { MailModule } from './mail/mail.module';
 import { CollaboratorsModule } from './collaborators/collaborators.module';
 import { SeatMapModule } from './seat-map/seat-map.module';
+import { AppRabbitMQModule } from './rabbitmq/rabbitmq.module';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { SeatMapModule } from './seat-map/seat-map.module';
         family: 4,
       },
     }),
+    AppRabbitMQModule,
     UsersModule,
     DatabaseModule,
     TestModule,
