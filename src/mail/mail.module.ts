@@ -23,7 +23,7 @@ import { MailService } from './mail.service';
           from: `"${configService.get<string>('MAIL_FROM_NAME') || 'HighShow'}" <${configService.get<string>('MAIL_FROM')}>`,
         },
         template: {
-          dir: join(__dirname, 'templates'),
+          dir: join(process.cwd(), 'src', 'mail', 'templates'),
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,

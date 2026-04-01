@@ -33,17 +33,19 @@ import { SeatMapModule } from './seat-map/seat-map.module';
       {
         name: 'global',
         ttl: 60_000,
-        limit: 60, // 60 req/phút — thoải mái cho user thực
+        limit: 120, // 120 req/phút — đủ thoải mái cho SPA gọi nhiều API song song
       },
       {
-        name: 'strict', // dùng riêng cho auth và booking
+        // Mặc định cao — chỉ siết xuống ở route cụ thể bằng @Throttle
+        name: 'strict',
         ttl: 60_000,
-        limit: 10,
+        limit: 1000,
       },
       {
-        name: 'burst', // chặn spam trong vòng 1 giây
+        // Mặc định cao — chỉ siết xuống ở route cụ thể bằng @Throttle
+        name: 'burst',
         ttl: 1_000,
-        limit: 3,
+        limit: 1000,
       },
     ]),
     ConfigModule.forRoot({

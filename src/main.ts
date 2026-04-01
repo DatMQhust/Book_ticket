@@ -3,6 +3,21 @@ import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe, Logger } from '@nestjs/common';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+
+const logger = new Logger('Bootstrap');
+
+process.on('uncaughtException', (error: Error) => {
+  logger.error('Uncaught Exception — process vẫn tiếp tục', error.stack);
+});
+
+process.on('unhandledRejection', (reason: unknown) => {
+  logger.error(
+    'Unhandled Promise Rejection — process vẫn tiếp tục',
+    reason instanceof Error ? reason.stack : String(reason),
+  );
+});
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -23,6 +38,15 @@ async function bootstrap() {
   });
 
   app.use(cookieParser());
+
+  app.useGlobalFilters(new AllExceptionsFilter());
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('Event Booking API')

@@ -46,7 +46,6 @@ export class AuthController {
 
   @Public()
   @UseGuards(LoginAttemptGuard, LocalAuthGuard)
-  @Throttle({ strict: { limit: 5, ttl: 300_000 } }) // 5 lần/5 phút/IP
   @Post('login')
   async login(
     @Req() req,
