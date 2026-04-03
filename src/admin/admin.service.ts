@@ -3,8 +3,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
@@ -57,8 +55,6 @@ export class AdminService {
     private readonly cancelRequestRepository: Repository<EventCancelRequestEntity>,
     @InjectRepository(EventChangeRequestEntity)
     private readonly changeRequestRepository: Repository<EventChangeRequestEntity>,
-    @InjectQueue('batch-refund')
-    private readonly batchRefundQueue: Queue,
     private readonly mailService: MailService,
     private readonly waitingRoomService: WaitingRoomService,
     private readonly httpService: HttpService,
@@ -482,12 +478,13 @@ export class AdminService {
           'vi-VN',
         ) ?? '';
 
-      // Enqueue chunk đầu tiên — processor tự re-enqueue các chunk tiếp theo
-      await this.batchRefundQueue.add(
-        'process-refund',
-        { eventId, offset: 0, eventName, eventDate },
-        { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
-      );
+      // Publish chunk đầu tiên lên RabbitMQ — consumer tự publish các chunk tiếp theo
+      this.amqpConnection.publish('booking-exchange', 'booking.refund', {
+        eventId,
+        offset: 0,
+        eventName,
+        eventDate,
+      });
 
       // Thông báo Organizer
       await this.mailService.sendCancelRequestApproved({

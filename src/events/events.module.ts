@@ -10,8 +10,7 @@ import { TicketTypeEntity } from 'src/ticket-type/entities/ticket-type.entity';
 import { MailModule } from 'src/mail/mail.module';
 import { EventCancelRequestEntity } from './entities/event-cancel-request.entity';
 import { EventChangeRequestEntity } from './entities/event-change-request.entity';
-import { BullModule } from '@nestjs/bull';
-import { BatchRefundProcessor } from './processors/batch-refund.processor';
+import { BatchRefundConsumer } from './consumers/batch-refund.consumer';
 import { TicketEntity } from 'src/ticket/entities/ticket.entity';
 import { WaitingRoomModule } from 'src/waiting-room/waiting-room.module';
 
@@ -26,13 +25,12 @@ import { WaitingRoomModule } from 'src/waiting-room/waiting-room.module';
       EventChangeRequestEntity,
       TicketEntity,
     ]),
-    BullModule.registerQueue({ name: 'batch-refund' }),
     CloudinaryModule,
     MailModule,
     WaitingRoomModule,
   ],
   controllers: [EventsController],
-  providers: [EventsService, BatchRefundProcessor],
+  providers: [EventsService, BatchRefundConsumer],
   exports: [EventsService],
 })
 export class EventsModule {}

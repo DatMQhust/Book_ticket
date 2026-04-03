@@ -33,7 +33,11 @@ export class BookingsController {
     strict: { limit: 5, ttl: 60_000 },
     burst: { limit: 1, ttl: 2_000 },
   })
-  async reserve(@Request() req, @Body() dto: CreateReservationDto) {
+  async reserve(
+    @Request() req,
+    @Body() dto: CreateReservationDto,
+    @Headers('x-wr-token') wrToken?: string,
+  ) {
     const ip =
       req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() ||
       req.socket?.remoteAddress;
@@ -55,6 +59,7 @@ export class BookingsController {
       userId,
       dto.ticketTypeId,
       dto.quantity,
+      wrToken,
     );
   }
 

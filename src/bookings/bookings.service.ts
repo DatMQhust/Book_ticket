@@ -1,6 +1,7 @@
 import {
   Injectable,
   BadRequestException,
+  ForbiddenException,
   NotFoundException,
   OnModuleInit,
   Logger,
@@ -13,9 +14,8 @@ import { TicketEntity, TicketStatus } from '../ticket/entities/ticket.entity';
 import { OrderEntity, OrderStatus } from '../order/entities/order.entity';
 import { OrganizationPaymentConfigEntity } from '../organizers/entities/payment-config.entity';
 import { UserEntity } from '../users/entities/user.entity';
-import { Queue } from 'bull';
-import { InjectQueue } from '@nestjs/bull';
 import { PaymentEventsGateway } from './payment-events.gateway';
+import { WaitingRoomService } from '../waiting-room/waiting-room.service';
 
 @Injectable()
 export class BookingsService implements OnModuleInit {
@@ -24,8 +24,8 @@ export class BookingsService implements OnModuleInit {
   constructor(
     @InjectRedis() private readonly redis: Redis,
     private dataSource: DataSource,
-    @InjectQueue('booking-queue') private bookingQueue: Queue,
     private paymentEventsGateway: PaymentEventsGateway,
+    private readonly waitingRoomService: WaitingRoomService,
   ) {}
 
   async onModuleInit() {
@@ -49,7 +49,51 @@ export class BookingsService implements OnModuleInit {
     }
   }
 
-  async reserveTicket(userId: string, ticketTypeId: string, quantity: number) {
+  async reserveTicket(
+    userId: string,
+    ticketTypeId: string,
+    quantity: number,
+    wrToken?: string,
+  ) {
+    // === WR Token Validation ===
+    const ticketType = await this.dataSource
+      .getRepository(TicketTypeEntity)
+      .createQueryBuilder('tt')
+      .leftJoin('tt.event', 'event')
+      .leftJoin('tt.session', 'session')
+      .leftJoin('session.event', 'sessionEvent')
+      .select(['tt.id', 'event.id', 'session.id', 'sessionEvent.id'])
+      .where('tt.id = :id', { id: ticketTypeId })
+      .getOne();
+
+    if (!ticketType) {
+      throw new NotFoundException('Loại vé không tồn tại.');
+    }
+
+    const eventId = ticketType.event?.id ?? ticketType.session?.event?.id;
+
+    if (eventId) {
+      const wrEnabled = await this.redis.hget(
+        `wr:config:${eventId}`,
+        'enabled',
+      );
+      if (wrEnabled === '1') {
+        if (!wrToken) {
+          throw new ForbiddenException('Bạn cần vào hàng chờ để đặt vé.');
+        }
+        const isValid = await this.waitingRoomService.validateToken(
+          userId,
+          eventId,
+          wrToken,
+        );
+        if (!isValid) {
+          throw new ForbiddenException(
+            'Token hàng chờ không hợp lệ hoặc đã hết hạn.',
+          );
+        }
+      }
+    }
+
     // B3: Giới hạn số reservation đang giữ đồng thời của 1 user
     const activeReservations = await this.redis.keys(`reservation:${userId}:*`);
     if (activeReservations.length >= 3) {
@@ -72,12 +116,12 @@ export class BookingsService implements OnModuleInit {
 
     const luaScript = `
       if redis.call('exists', KEYS[2]) == 1 then
-        return -2 
+        return -2
       end
 
       local stock = tonumber(redis.call('get', KEYS[1]))
       if not stock then return -1 end
-      
+
       if stock >= tonumber(ARGV[1]) then
         redis.call('decrby', KEYS[1], ARGV[1])
         redis.call('set', KEYS[2], ARGV[2], 'EX', ARGV[3])
@@ -109,27 +153,41 @@ export class BookingsService implements OnModuleInit {
     if (result === 0) {
       throw new BadRequestException('Vé đã hết hoặc không đủ số lượng.');
     }
+
     try {
-      await this.bookingQueue.add(
-        'release-ticket',
+      this.waitingRoomService.publishToBooking(
+        'booking.release',
         {
           userId,
           ticketTypeId,
           quantity,
+          eventId,
           reservationKey,
+          retryCount: 0,
         },
-        {
-          delay: ttl * 1000,
-          removeOnComplete: true,
-        },
+        { delayMs: ttl * 1000 },
       );
     } catch (error) {
-      this.logger.error(`Failed to add release-ticket job: ${error.message}`);
+      this.logger.error(
+        `Failed to publish release-ticket message: ${error.message}`,
+      );
       await this.redis.del(reservationKey);
       await this.redis.incrby(stockKey, quantity);
       throw new BadRequestException(
         'Lỗi hệ thống giữ vé, vui lòng thử lại sau.',
       );
+    }
+
+    // Free WR slot sau reserve thành công
+    if (eventId) {
+      const wrEnabled = await this.redis.hget(
+        `wr:config:${eventId}`,
+        'enabled',
+      );
+      if (wrEnabled === '1') {
+        await this.redis.del(`wr:token:${userId}:${eventId}`);
+        this.waitingRoomService.publishSlotFreed(userId, eventId);
+      }
     }
 
     return {
@@ -203,9 +261,22 @@ export class BookingsService implements OnModuleInit {
       const savedOrder = await queryRunner.manager.save(order);
       await queryRunner.commitTransaction();
 
+      // Lưu cả eventId để finalizePaymentWebhook có thể publish WR slot lifecycle
+      const ttForEvent = await this.dataSource
+        .getRepository(TicketTypeEntity)
+        .createQueryBuilder('tt')
+        .leftJoin('tt.event', 'e')
+        .leftJoin('tt.session', 's')
+        .leftJoin('s.event', 'se')
+        .select(['tt.id', 'e.id', 's.id', 'se.id'])
+        .where('tt.id = :id', { id: ticketTypeId })
+        .getOne();
+      const eventIdForContext =
+        ttForEvent?.event?.id ?? ttForEvent?.session?.event?.id;
+
       await this.redis.set(
         `order_context:${orderCode}`,
-        ticketTypeId,
+        JSON.stringify({ ticketTypeId, eventId: eventIdForContext }),
         'EX',
         600,
       );
@@ -254,8 +325,19 @@ export class BookingsService implements OnModuleInit {
 
     if (order.status === OrderStatus.COMPLETED) return { success: true };
 
-    const ticketTypeId = await this.redis.get(`order_context:${orderCode}`);
-    if (!ticketTypeId) return { success: false };
+    const rawContext = await this.redis.get(`order_context:${orderCode}`);
+    if (!rawContext) return { success: false };
+
+    // Hỗ trợ cả format cũ (plain string) lẫn format mới (JSON)
+    let ticketTypeId: string;
+    let contextEventId: string | undefined;
+    try {
+      const parsed = JSON.parse(rawContext);
+      ticketTypeId = parsed.ticketTypeId;
+      contextEventId = parsed.eventId;
+    } catch {
+      ticketTypeId = rawContext;
+    }
 
     const paymentConfig = await this.getSePayConfig(ticketTypeId);
 
@@ -335,6 +417,11 @@ export class BookingsService implements OnModuleInit {
       ).catch((err) =>
         this.logger.error(`emitTicketSoldStats failed: ${err.message}`),
       );
+
+      // Free WR slot sau payment thành công (fire-and-forget)
+      if (contextEventId) {
+        this.waitingRoomService.publishSlotFreed(order.user.id, contextEventId);
+      }
 
       this.logger.log(`Order ${orderCode} COMPLETED via SePay.`);
       return { success: true };

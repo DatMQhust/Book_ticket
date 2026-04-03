@@ -222,10 +222,7 @@ export class WaitingRoomService {
 
   /** Trạng thái hiện tại của user trong WR */
   async getStatus(userId: string, eventId: string): Promise<StatusResult> {
-    const isActive = await this.redis.sismember(
-      `wr:active:${eventId}`,
-      userId,
-    );
+    const isActive = await this.redis.sismember(`wr:active:${eventId}`, userId);
     if (isActive) {
       const token = await this.redis.get(`wr:token:${userId}:${eventId}`);
       const ttl = await this.redis.ttl(`wr:token:${userId}:${eventId}`);
@@ -271,10 +268,28 @@ export class WaitingRoomService {
     return {
       enabled: config?.enabled === '1',
       maxConcurrent: parseInt(config?.maxConcurrent || '50'),
-      maxQueueSize: parseInt(config?.maxQueueSize || String(DEFAULT_MAX_QUEUE_SIZE)),
+      maxQueueSize: parseInt(
+        config?.maxQueueSize || String(DEFAULT_MAX_QUEUE_SIZE),
+      ),
       activeCount,
       queueSize,
     };
+  }
+
+  /**
+   * Notify WR slot freed sau khi reserve thành công.
+   * Gọi bởi BookingsService sau khi Lua reserve thành công.
+   */
+  publishSlotFreed(userId: string, eventId: string): void {
+    this.amqpConnection.publish(
+      'waiting-room-exchange',
+      'wr.slot.reserve-done',
+      {
+        userId,
+        eventId,
+        reason: 'reserve_done',
+      },
+    );
   }
 
   /** Publish message lên booking exchange (public — dùng bởi consumers) */

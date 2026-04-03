@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BullModule } from '@nestjs/bull';
 import { HttpModule } from '@nestjs/axios';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
@@ -27,7 +26,6 @@ import { WaitingRoomModule } from '../waiting-room/waiting-room.module';
       EventCancelRequestEntity,
       EventChangeRequestEntity,
     ]),
-    BullModule.registerQueue({ name: 'batch-refund' }),
     MailModule,
     WaitingRoomModule,
     HttpModule,

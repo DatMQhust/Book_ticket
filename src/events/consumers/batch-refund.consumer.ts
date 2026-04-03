@@ -1,6 +1,5 @@
-import { InjectQueue, Process, Processor } from '@nestjs/bull';
-import { Logger } from '@nestjs/common';
-import { Job, Queue } from 'bull';
+import { Injectable, Logger } from '@nestjs/common';
+import { RabbitSubscribe, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { DataSource, In } from 'typeorm';
 import { OrderEntity, OrderStatus } from '../../order/entities/order.entity';
 import {
@@ -10,33 +9,41 @@ import {
 import { EventEntity, EventStatus } from '../entities/event.entity';
 import { MailService } from '../../mail/mail.service';
 
-// Mỗi job xử lý tối đa ORDER_CHUNK_SIZE đơn hàng
+// Mỗi message xử lý tối đa ORDER_CHUNK_SIZE đơn hàng
 const ORDER_CHUNK_SIZE = 100;
 
 // Gửi email theo lô nhỏ — tránh Gmail throttle
 const EMAIL_BATCH_SIZE = 20;
 const EMAIL_BATCH_DELAY_MS = 3000; // 3s giữa mỗi lô email
 
-export interface BatchRefundJobData {
+export interface BatchRefundMessage {
   eventId: string;
   offset: number; // vị trí bắt đầu của chunk hiện tại
   eventName: string; // cache để không query lại mỗi chunk
   eventDate: string;
 }
 
-@Processor('batch-refund')
-export class BatchRefundProcessor {
-  private readonly logger = new Logger(BatchRefundProcessor.name);
+@Injectable()
+export class BatchRefundConsumer {
+  private readonly logger = new Logger(BatchRefundConsumer.name);
 
   constructor(
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
-    @InjectQueue('batch-refund') private readonly batchRefundQueue: Queue,
+    private readonly amqpConnection: AmqpConnection,
   ) {}
 
-  @Process({ name: 'process-refund', concurrency: 1 })
-  async handleBatchRefund(job: Job<BatchRefundJobData>) {
-    const { eventId, offset, eventName, eventDate } = job.data;
+  @RabbitSubscribe({
+    exchange: 'booking-exchange',
+    routingKey: 'booking.refund',
+    queue: 'booking.batch-refund',
+    queueOptions: {
+      deadLetterExchange: 'dlq-exchange',
+      deadLetterRoutingKey: 'booking.batch-refund',
+    },
+  })
+  async handleBatchRefund(msg: BatchRefundMessage): Promise<void> {
+    const { eventId, offset, eventName, eventDate } = msg;
 
     this.logger.log(
       `Processing batch refund chunk — event: ${eventId}, offset: ${offset}`,
@@ -97,15 +104,16 @@ export class BatchRefundProcessor {
         `Batch refund completed for event ${eventId}. Total processed up to offset ${offset + orders.length}.`,
       );
     } else {
-      // Còn orders — tự enqueue chunk tiếp theo
-      await this.batchRefundQueue.add(
-        'process-refund',
-        { eventId, offset: offset + ORDER_CHUNK_SIZE, eventName, eventDate },
-        { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
-      );
+      // Còn orders — publish chunk tiếp theo
+      this.amqpConnection.publish('booking-exchange', 'booking.refund', {
+        eventId,
+        offset: offset + ORDER_CHUNK_SIZE,
+        eventName,
+        eventDate,
+      });
 
       this.logger.log(
-        `Chunk done — re-enqueued next chunk at offset ${offset + ORDER_CHUNK_SIZE}`,
+        `Chunk done — published next chunk at offset ${offset + ORDER_CHUNK_SIZE}`,
       );
     }
   }
